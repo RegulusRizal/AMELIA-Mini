@@ -58,6 +58,23 @@ export default async function DashboardPage() {
             </div>
           </div>
 
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <Link
+                href="/users"
+                className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                <h4 className="font-medium text-blue-700 dark:text-blue-400">User Management</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage users and permissions</p>
+              </Link>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed">
+                <h4 className="font-medium text-gray-500 dark:text-gray-500">HR Module</h4>
+                <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Coming soon</p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-4">
             <Link
               href="/"
