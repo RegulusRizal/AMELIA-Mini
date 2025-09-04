@@ -28,16 +28,12 @@ import {
   MoreHorizontal,
   Mail,
   Calendar,
-  Activity
+  Activity,
+  AlertCircle
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { checkSuperAdmin } from '@/lib/auth/helpers';
+import { AddUserDialog } from './components/add-user-dialog';
+import { UserActions } from './components/user-actions';
 
 interface UserProfile {
   id: string;
@@ -171,6 +167,38 @@ export default async function UsersPage({ searchParams }: PageProps) {
     redirect('/auth/login');
   }
   
+  // Check if user is super_admin
+  const isSuperAdmin = await checkSuperAdmin();
+  
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to access User Management.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Only super administrators can manage users and roles.
+            </p>
+            <Link href="/dashboard">
+              <Button>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Return to Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   // Get users and roles
   const { users, totalCount } = await getUsers(searchParams);
   const userIds = users.map(u => u.id);
@@ -213,10 +241,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
               Back to Dashboard
             </Button>
           </Link>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+          <AddUserDialog />
         </div>
       </div>
 
@@ -386,30 +411,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit User
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Shield className="mr-2 h-4 w-4" />
-                                Manage Roles
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete User
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <UserActions 
+                            user={user}
+                            userRoles={roles}
+                          />
                         </TableCell>
                       </TableRow>
                     );
@@ -451,10 +456,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
               </p>
               {!searchParams?.search && (
                 <div className="mt-6">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add User
-                  </Button>
+                  <AddUserDialog />
                 </div>
               )}
             </div>
