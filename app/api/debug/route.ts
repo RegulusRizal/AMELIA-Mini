@@ -46,9 +46,6 @@ export async function GET() {
         authCookies: authCookies.map(c => ({
           name: c.name,
           hasValue: !!c.value,
-          httpOnly: c.httpOnly,
-          secure: c.secure,
-          sameSite: c.sameSite,
         }))
       },
       troubleshooting: {
