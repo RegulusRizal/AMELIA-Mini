@@ -25,8 +25,8 @@ export async function GET() {
         user: user?.email || 'No user logged in'
       },
       database: {
-        connected: !dbError && (typeof dbError === 'object' && 'message' in dbError ? !dbError.message?.includes('relation') : true),
-        error: typeof dbError === 'object' && 'message' in dbError ? dbError.message : null
+        connected: !dbError,
+        error: dbError ? String(dbError) : null
       }
     }
     
