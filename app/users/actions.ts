@@ -198,3 +198,68 @@ export async function updateUserStatus(userId: string, status: 'active' | 'inact
   revalidatePath('/users');
   return { success: true };
 }
+
+export async function resetUserPassword(userId: string, newPassword: string) {
+  // Verify current user is super_admin
+  await requireSuperAdmin();
+  
+  // Use admin client for password reset
+  const adminClient = createAdminClient();
+  
+  // Update user password using admin privileges
+  const { error } = await adminClient.auth.admin.updateUserById(userId, {
+    password: newPassword,
+  });
+  
+  if (error) {
+    console.error('Error resetting password:', error);
+    return { error: error.message };
+  }
+  
+  // Log the password reset action
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  await adminClient.from('activity_logs').insert({
+    user_id: user?.id,
+    action: 'password_reset',
+    module: 'user_management',
+    resource_type: 'user',
+    resource_id: userId,
+    created_at: new Date().toISOString(),
+  });
+  
+  return { success: true };
+}
+
+export async function sendPasswordResetEmail(email: string) {
+  // Verify current user is super_admin
+  await requireSuperAdmin();
+  
+  // Use regular client for sending reset email (doesn't require admin)
+  const supabase = await createClient();
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
+  });
+  
+  if (error) {
+    console.error('Error sending password reset email:', error);
+    return { error: error.message };
+  }
+  
+  // Log the action
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminClient = createAdminClient();
+  
+  await adminClient.from('activity_logs').insert({
+    user_id: user?.id,
+    action: 'password_reset_email_sent',
+    module: 'user_management',
+    resource_type: 'user',
+    resource_id: email,
+    created_at: new Date().toISOString(),
+  });
+  
+  return { success: true };
+}

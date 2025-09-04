@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Users, Building2, Package, ShoppingCart, DollarSign, ArrowRight } from 'lucide-react'
+import { Users, Building2, Package, ShoppingCart, DollarSign, ArrowRight, UserCircle } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -106,6 +106,14 @@ export default async function DashboardPage() {
               className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
             >
               Back to Home
+            </Link>
+            
+            <Link
+              href="/profile"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors inline-flex items-center"
+            >
+              <UserCircle className="h-4 w-4 mr-2" />
+              My Profile
             </Link>
             
             <form action="/auth/logout" method="POST">

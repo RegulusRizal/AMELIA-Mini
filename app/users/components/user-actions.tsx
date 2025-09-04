@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { EditUserDialog } from './edit-user-dialog';
 import { DeleteUserDialog } from './delete-user-dialog';
 import { ManageRolesDialog } from './manage-roles-dialog';
+import { ResetPasswordDialog } from './reset-password-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,8 @@ import {
   Edit,
   Trash2,
   MoreHorizontal,
-  Shield
+  Shield,
+  Key
 } from 'lucide-react';
 
 interface UserActionsProps {
@@ -43,6 +45,7 @@ export function UserActions({ user, userRoles = [] }: UserActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
 
   return (
     <>
@@ -62,6 +65,10 @@ export function UserActions({ user, userRoles = [] }: UserActionsProps) {
           <DropdownMenuItem onClick={() => setRolesOpen(true)}>
             <Shield className="mr-2 h-4 w-4" />
             Manage Roles
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setResetPasswordOpen(true)}>
+            <Key className="mr-2 h-4 w-4" />
+            Reset Password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
@@ -91,6 +98,12 @@ export function UserActions({ user, userRoles = [] }: UserActionsProps) {
         currentRoles={userRoles}
         open={rolesOpen}
         onOpenChange={setRolesOpen}
+      />
+      
+      <ResetPasswordDialog
+        user={user}
+        open={resetPasswordOpen}
+        onOpenChange={setResetPasswordOpen}
       />
     </>
   );
