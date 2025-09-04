@@ -5,9 +5,14 @@ import Link from 'next/link'
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (!user) {
+  // Debug logging
+  console.log('Dashboard - User:', user)
+  console.log('Dashboard - Error:', error)
+
+  if (error || !user) {
+    console.log('Dashboard - Redirecting to login, no user found')
     redirect('/auth/login')
   }
 
@@ -39,7 +44,7 @@ export default async function DashboardPage() {
               <div className="flex">
                 <span className="font-medium w-24">Created:</span>
                 <span className="text-gray-600 dark:text-gray-400">
-                  {new Date(user.created_at).toLocaleString()}
+                  {user.created_at ? new Date(user.created_at).toLocaleString() : 'Unknown'}
                 </span>
               </div>
               <div className="flex">
