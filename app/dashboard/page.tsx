@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Users, Building2, Package, ShoppingCart, DollarSign, ArrowRight } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -59,17 +60,41 @@ export default async function DashboardPage() {
           </div>
 
           <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <h3 className="text-lg font-semibold mb-4">Quick Access to Modules</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Link
                 href="/users"
-                className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                className="group p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all hover:scale-105 border border-blue-200 dark:border-blue-800"
               >
-                <h4 className="font-medium text-blue-700 dark:text-blue-400">User Management</h4>
+                <div className="flex items-start justify-between">
+                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <ArrowRight className="h-4 w-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <h4 className="font-medium text-blue-700 dark:text-blue-400 mt-3">User Management</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage users and permissions</p>
               </Link>
-              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed">
-                <h4 className="font-medium text-gray-500 dark:text-gray-500">HR Module</h4>
+              
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed border border-gray-200 dark:border-gray-700">
+                <Building2 className="h-6 w-6 text-gray-400" />
+                <h4 className="font-medium text-gray-500 dark:text-gray-500 mt-3">HR Module</h4>
+                <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Coming soon</p>
+              </div>
+              
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed border border-gray-200 dark:border-gray-700">
+                <Package className="h-6 w-6 text-gray-400" />
+                <h4 className="font-medium text-gray-500 dark:text-gray-500 mt-3">Inventory</h4>
+                <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Coming soon</p>
+              </div>
+              
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed border border-gray-200 dark:border-gray-700">
+                <ShoppingCart className="h-6 w-6 text-gray-400" />
+                <h4 className="font-medium text-gray-500 dark:text-gray-500 mt-3">POS System</h4>
+                <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Coming soon</p>
+              </div>
+              
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg opacity-50 cursor-not-allowed border border-gray-200 dark:border-gray-700">
+                <DollarSign className="h-6 w-6 text-gray-400" />
+                <h4 className="font-medium text-gray-500 dark:text-gray-500 mt-3">Finance</h4>
                 <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">Coming soon</p>
               </div>
             </div>
