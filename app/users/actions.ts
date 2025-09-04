@@ -34,10 +34,11 @@ export async function createUser(formData: FormData) {
     return { error: authError.message };
   }
   
-  // Create profile for the user using admin client (bypasses RLS)
+  // Update the profile that was auto-created by the trigger
+  // Using upsert to handle both cases: trigger created it or not
   const { error: profileError } = await adminClient
     .from('profiles')
-    .insert({
+    .upsert({
       id: authData.user!.id,
       email,
       display_name: displayName,
@@ -46,13 +47,14 @@ export async function createUser(formData: FormData) {
       phone,
       employee_id: employeeId || null,
       status,
-      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'id'
     });
   
   if (profileError) {
-    console.error('Error creating profile:', profileError);
-    // Try to clean up auth user if profile creation fails
+    console.error('Error updating profile:', profileError);
+    // Try to clean up auth user if profile update fails
     await adminClient.auth.admin.deleteUser(authData.user!.id);
     return { error: profileError.message };
   }
