@@ -60,7 +60,7 @@ interface UserRole {
     id: string;
     name: string;
     display_name: string;
-  };
+  } | null;
 }
 
 interface PageProps {
@@ -124,7 +124,7 @@ async function getUserRoles(userIds: string[]) {
     return [];
   }
   
-  return data as UserRole[] || [];
+  return (data || []) as UserRole[];
 }
 
 function getInitials(user: UserProfile): string {
@@ -184,7 +184,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
       acc[ur.user_id].push(ur.role);
     }
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, Array<{id: string; name: string; display_name: string}>>);
   
   // Calculate stats
   const activeUsers = users.filter(u => u.status === 'active').length;
@@ -366,7 +366,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
                         <TableCell>
                           {roles.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
-                              {roles.map((role: any) => (
+                              {roles.map((role) => (
                                 <Badge key={role.id} variant="outline">
                                   {role.display_name || role.name}
                                 </Badge>
