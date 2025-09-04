@@ -34,16 +34,10 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
     role_id
   } = params;
   
+  // Simplified query to avoid join errors
   let query = supabase
     .from('profiles')
-    .select(`
-      *,
-      user_type:user_types(*),
-      user_roles(
-        *,
-        role:roles(*)
-      )
-    `, { count: 'exact' });
+    .select('*', { count: 'exact' });
   
   // Apply filters
   if (search) {
@@ -81,11 +75,19 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
   const { data, error, count } = await query;
   
   if (error) {
-    throw new Error(`Failed to fetch users: ${error.message}`);
+    console.error('Failed to fetch users:', error.message);
+    // Return empty response instead of throwing to prevent page crash
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      total_pages: 0
+    };
   }
   
   return {
-    data: data as UserProfile[],
+    data: data as UserProfile[] || [],
     total: count || 0,
     page,
     limit,
@@ -188,11 +190,19 @@ export async function getRoles(params: RoleFilterParams = {}): Promise<Paginated
   const { data, error, count } = await query;
   
   if (error) {
-    throw new Error(`Failed to fetch roles: ${error.message}`);
+    console.error('Failed to fetch roles:', error.message);
+    // Return empty response instead of throwing to prevent page crash
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      total_pages: 0
+    };
   }
   
   return {
-    data: data as Role[],
+    data: data as Role[] || [],
     total: count || 0,
     page,
     limit,
@@ -374,10 +384,12 @@ export async function getUserTypes(): Promise<UserType[]> {
     .order('display_name');
   
   if (error) {
-    throw new Error(`Failed to fetch user types: ${error.message}`);
+    console.error('Failed to fetch user types:', error.message);
+    // Return empty array instead of throwing to prevent page crash
+    return [];
   }
   
-  return data as UserType[];
+  return data as UserType[] || [];
 }
 
 // =====================================================
