@@ -12,10 +12,14 @@
 - **Organization**: roy-yabuts-projects
 - **Project ID**: prj_Ub50JLoHKkYTAedSxJmT2AdkfIxl
 
-### Supabase  
-- **Status**: NOT CONNECTED
-- **Issue**: No access token found - requires login
-- **Next Step**: Run `supabase login` to authenticate
+### Supabase ✅
+- **Status**: CONNECTED
+- **Project Name**: AMELIA-Mini
+- **Project Ref**: aigrahysczmodaqpbbqp  
+- **Organization ID**: rrnjhumizbzniimkwcip
+- **Region**: Southeast Asia (Singapore)
+- **Project URL**: https://aigrahysczmodaqpbbqp.supabase.co
+- **Note**: Database password required for full project linking
 
 ## How to Connect
 
@@ -50,12 +54,18 @@ supabase start
 - ✅ Next.js app configured for Vercel deployment
 - ✅ Supabase client libraries installed
 - ✅ Environment variables template created (.env.local.example)
-- ⚠️ Actual credentials needed in .env.local
-- ❌ Not linked to Vercel project
-- ❌ Not linked to Supabase project
+- ✅ Linked to Vercel project (amelia-mini)
+- ✅ Connected to Supabase (authentication successful)
+- ⚠️ Actual Supabase anon key needed in .env.local
+- ⚠️ Database password needed for full Supabase project linking
 
 ## Required Actions
-1. Create accounts on [Vercel](https://vercel.com) and [Supabase](https://supabase.com) if not already done
-2. Run the login commands above
-3. Get your Supabase project credentials and update `.env.local`
-4. Link both services to this repository
+1. ✅ Vercel account connected
+2. ✅ Supabase account connected
+3. ⚠️ Get your Supabase anon key from [API Settings](https://supabase.com/dashboard/project/aigrahysczmodaqpbbqp/settings/api)
+4. ⚠️ Update `.env.local` with the anon key
+5. ⚠️ To fully link Supabase project locally, run:
+   ```bash
+   supabase link --project-ref aigrahysczmodaqpbbqp --password YOUR_DB_PASSWORD
+   ```
+   Get your database password from [Database Settings](https://supabase.com/dashboard/project/aigrahysczmodaqpbbqp/settings/database)
