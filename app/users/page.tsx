@@ -106,7 +106,7 @@ async function getUsers(searchParams: PageProps['searchParams']) {
   return { users: data as UserProfile[] || [], totalCount: count || 0 };
 }
 
-async function getUserRoles(userIds: string[]) {
+async function getUserRoles(userIds: string[]): Promise<UserRole[]> {
   if (userIds.length === 0) return [];
   
   const supabase = await createClient();
@@ -124,7 +124,8 @@ async function getUserRoles(userIds: string[]) {
     return [];
   }
   
-  return (data || []) as UserRole[];
+  // Type assertion with unknown first for safety
+  return (data as unknown as UserRole[]) || [];
 }
 
 function getInitials(user: UserProfile): string {
