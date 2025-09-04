@@ -4,11 +4,13 @@
 - **Vercel CLI**: v47.0.4 (Installed)
 - **Supabase CLI**: v2.39.2 (Installed)
 
-## Connection Status ❌
-### Vercel
-- **Status**: NOT CONNECTED
-- **Issue**: No credentials found - requires login
-- **Next Step**: Run `vercel login` to authenticate
+## Connection Status
+### Vercel ✅
+- **Status**: CONNECTED
+- **User**: regulusrizal (royshemuelyabut@gmail.com)
+- **Project**: amelia-mini
+- **Organization**: roy-yabuts-projects
+- **Project ID**: prj_Ub50JLoHKkYTAedSxJmT2AdkfIxl
 
 ### Supabase  
 - **Status**: NOT CONNECTED
