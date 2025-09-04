@@ -269,7 +269,7 @@ export function useUserRoles(userId: string) {
           .eq('user_id', userId);
 
         if (rolesError) throw rolesError;
-        setRoles(data?.map(ur => ur.role) as Role[]);
+        setRoles(data?.map((ur: any) => ur.role as Role) || []);
       } catch (err) {
         console.error('Error fetching user roles:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch user roles');

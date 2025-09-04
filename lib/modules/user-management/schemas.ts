@@ -23,8 +23,8 @@ export const updateUserSchema = z.object({
   employee_id: z.string().optional().nullable(),
   user_type_id: z.string().uuid().optional().nullable(),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
-  preferences: z.record(z.any()).optional(),
-  notification_settings: z.record(z.any()).optional(),
+  preferences: z.record(z.string(), z.any()).optional(),
+  notification_settings: z.record(z.string(), z.any()).optional(),
 });
 
 export const userProfileSchema = z.object({
@@ -64,7 +64,7 @@ export const assignRoleSchema = z.object({
   user_id: z.string().uuid('Invalid user ID'),
   role_id: z.string().uuid('Invalid role ID'),
   expires_at: z.string().datetime().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 // Permission schemas
