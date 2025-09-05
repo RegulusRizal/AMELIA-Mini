@@ -153,9 +153,15 @@ export async function processBatchWithLogging(items: any[]) {
       }
     } catch (error) {
       failed++;
-      logger.warn(`Failed to process item`, error instanceof Error ? error : undefined, {
-        metadata: { itemId: item.id, processed, failed }
-      });
+      if (error instanceof Error) {
+        logger.error(`Failed to process item`, error, {
+          metadata: { itemId: item.id, processed, failed }
+        });
+      } else {
+        logger.warn(`Failed to process item`, {
+          metadata: { itemId: item.id, processed, failed, error: String(error) }
+        });
+      }
     }
   }
   

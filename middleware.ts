@@ -1,29 +1,39 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { Logger } from '@/lib/logging/service'
-import { randomUUID } from 'crypto'
+
+// Cryptographically secure UUID function for Edge Runtime
+const randomUUID = () => {
+  // Use Web Crypto API available in Edge Runtime
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback with crypto.getRandomValues() for better randomness
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  // Set version (4) and variant bits
+  arr[6] = (arr[6] & 0x0f) | 0x40;
+  arr[8] = (arr[8] & 0x3f) | 0x80;
+  // Convert to UUID string format
+  const hex: string[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (i === 4 || i === 6 || i === 8 || i === 10) {
+      hex.push('-');
+    }
+    hex.push(arr[i].toString(16).padStart(2, '0'));
+  }
+  return hex.join('');
+};
 
 export async function middleware(request: NextRequest) {
   const startTime = Date.now();
   const requestId = randomUUID();
-  
-  // Create logger with request context
-  const logger = new Logger({
-    requestId,
-    path: request.nextUrl.pathname,
-    method: request.method,
-    metadata: {
-      userAgent: request.headers.get('user-agent'),
-      referer: request.headers.get('referer'),
-      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-    }
-  });
 
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  try {
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    })
   
   // Add request ID to response headers for tracing
   response.headers.set('X-Request-Id', requestId);
@@ -74,16 +84,13 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
+          // Update cookies on existing request object
           request.cookies.set({
             name,
             value,
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          // Update cookies on existing response object without recreating it
           response.cookies.set({
             name,
             value,
@@ -91,19 +98,14 @@ export async function middleware(request: NextRequest) {
           })
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          // Delete cookie from request
+          request.cookies.delete(name)
+          // Remove cookie from response by setting maxAge to 0
           response.cookies.set({
             name,
             value: '',
+            maxAge: 0,
+            expires: new Date(0),
             ...options,
           })
         },
@@ -112,8 +114,25 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh session if expired - this is important!
-  const { data: { session } } = await supabase.auth.getSession()
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null;
+  
+  try {
+    // Only get user - no need for redundant getSession() call
+    const userResult = await supabase.auth.getUser();
+    user = userResult.data?.user;
+  } catch (error) {
+    // Log the error but don't crash - allow request to continue
+    // In production, only log errors and critical warnings
+    if (process.env.NODE_ENV === 'development' || error instanceof Error) {
+      console.error('Auth operation failed in middleware', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        requestId,
+        path: request.nextUrl.pathname
+      });
+    }
+    // Gracefully degrade - treat as unauthenticated
+    user = null;
+  }
 
   // Protected routes
   const protectedPaths = ['/dashboard', '/users', '/hr', '/inventory', '/pos', '/finance'];
@@ -123,25 +142,34 @@ export async function middleware(request: NextRequest) {
   
   if (isProtectedPath) {
     if (!user) {
-      logger.warn('Unauthorized access attempt to protected route', {
-        userId: undefined,
+      console.warn('Unauthorized access attempt to protected route', {
+        path: request.nextUrl.pathname,
+        requestId,
         statusCode: 401
       });
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
     
-    // Log successful authentication
-    logger.debug('Authenticated request', {
-      userId: user.id
-    });
+    // Log successful authentication (without PII in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Authenticated request', {
+        userId: user.id,
+        path: request.nextUrl.pathname,
+        requestId
+      });
+    }
   }
 
   // Redirect to dashboard if user is logged in and tries to access login page
   if (request.nextUrl.pathname.startsWith('/auth/login')) {
     if (user) {
-      logger.debug('Redirecting authenticated user from login to dashboard', {
-        userId: user.id
-      });
+      // Don't log PII in production
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Redirecting authenticated user from login to dashboard', {
+          userId: user.id,
+          requestId
+        });
+      }
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
@@ -151,18 +179,39 @@ export async function middleware(request: NextRequest) {
   
   // Log slow requests
   if (duration > 1000) {
-    logger.warn(`Slow request detected: ${duration}ms`, {
+    console.warn(`Slow request detected: ${duration}ms`, {
       duration,
+      path: request.nextUrl.pathname,
+      requestId,
       statusCode: response.status
     });
-  } else {
-    logger.debug(`Request completed in ${duration}ms`, {
-      duration,
-      statusCode: response.status
-    });
+  } else if (duration > 500) {
+    // Only log medium-slow requests in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Request completed in ${duration}ms`, {
+        duration,
+        path: request.nextUrl.pathname,
+        requestId,
+        statusCode: response.status
+      });
+    }
   }
 
   return response
+  } catch (error) {
+    // If anything fails catastrophically, return a basic response to keep the app running
+    console.error('Critical middleware error', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      // Only include stack traces in development to prevent information disclosure
+      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
+      path: request.nextUrl.pathname,
+      requestId
+    });
+    
+    // Return a basic NextResponse without any modifications
+    // This ensures the request can continue even if middleware fails
+    return NextResponse.next();
+  }
 }
 
 export const config = {

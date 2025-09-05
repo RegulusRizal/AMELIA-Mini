@@ -86,7 +86,7 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
     logger.error('Failed to fetch users', error as Error, {
       module: 'user-management',
       action: 'getUsers',
-      params
+      metadata: { params }
     });
     // Return empty response instead of throwing to prevent page crash
     return {
@@ -205,7 +205,7 @@ export async function getRoles(params: RoleFilterParams = {}): Promise<Paginated
     logger.error('Failed to fetch roles', error as Error, {
       module: 'user-management',
       action: 'getRoles',
-      params
+      metadata: { params }
     });
     // Return empty response instead of throwing to prevent page crash
     return {
@@ -340,8 +340,10 @@ export async function checkPermission(
     logger.error('Permission check failed', error as Error, {
       module: 'user-management',
       action: 'checkPermission',
-      permission: { module, resource, action },
-      userId
+      userId,
+      metadata: { 
+        permission: { module, resource, action }
+      }
     });
     return false;
   }
@@ -388,8 +390,8 @@ export async function canAccessModule(moduleName: string, userId?: string): Prom
     logger.error('Module access check failed', error as Error, {
       module: 'user-management',
       action: 'canAccessModule',
-      moduleName,
-      userId
+      userId,
+      metadata: { moduleName }
     });
     return false;
   }

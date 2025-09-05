@@ -230,10 +230,21 @@ npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 
 **Success Metric**: ✅ EXCEEDED - Compliance score 52% → **88%** (Target: 70%)
 
+### Phase 3.5: Critical Security Remediation (4 hours) 🔴 PENDING
+**Priority**: CRITICAL - Complete within 24 hours
+**Added**: Post Phase 3 Multi-Audit
+
+1. [ ] Fix DATABASE_URL exposure in CI/CD
+2. [ ] Add CSRF token validation tests
+3. [ ] Remove continue-on-error from CI/CD
+4. [ ] Move contact info to environment variables
+
+**Success Metric**: Security score 82% → 90%, All HIGH/CRITICAL issues resolved
+
 ### Phase 4: Production Hardening (16 hours)
 **Priority**: MEDIUM - Complete within 2 weeks
 
-1. [ ] Achieve 60% test coverage
+1. [ ] Achieve 80% test coverage
 2. [ ] Full accessibility audit and fixes
 3. [ ] Implement rate limiting
 4. [ ] Add security headers
@@ -241,7 +252,7 @@ npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 6. [ ] Performance optimization
 7. [ ] Documentation updates
 
-**Success Metric**: Overall health 70% → 85%
+**Success Metric**: Overall health 88% → 95%
 
 ---
 
@@ -272,14 +283,15 @@ npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 - [✅] Error monitoring configured (Enterprise logging implemented)
 - [✅] All exposed credentials removed and rotated
 
-### Current Status: **FULLY PRODUCTION READY** 🟢 
+### Current Status: **CONDITIONAL PRODUCTION READY** 🟡 
 **Live URL**: https://amelia-mini.vercel.app
 **Phase 1 Complete**: All CRITICAL security blockers resolved & deployed (Security: 85%)
 **Phase 2 Complete**: All performance optimizations implemented (Performance: B+)
 **Phase 3 Complete**: All compliance foundations implemented (Compliance: 88/100)
+**Phase 3.5 PENDING**: 4 critical security issues identified in multi-audit (4 hours work)
 **Current Health Score**: 88/100 (enterprise-grade quality achieved)
-**Status**: **READY FOR FULL PRODUCTION DEPLOYMENT**  
-**Next**: Phase 4 (Production Hardening) - Optional enhancements for scale
+**Status**: **REQUIRES PHASE 3.5 COMPLETION BEFORE PRODUCTION TRAFFIC**  
+**Next**: Phase 3.5 (Critical Security Remediation) - MANDATORY within 24 hours
 
 ---
 
@@ -481,6 +493,136 @@ Each phase is complete when:
 **Focus**: Advanced monitoring, performance optimization, additional security layers
 
 **Full Documentation**: See `/PHASE3_COMPLIANCE_FOUNDATION.md` for complete implementation details
+
+## 🔧 Phase 3.5: Critical Security Remediation (4 hours)
+**Priority**: CRITICAL - Required before production traffic
+**Added**: 2025-09-05 (Post Phase 3 Multi-Audit)
+**Status**: 🔴 PENDING - Blocks production deployment
+
+### Context
+Three parallel security audits of Phase 3 revealed 4 critical/high severity issues that must be resolved before production deployment. While Phase 3 exceeded all targets (88/100 health score), these security gaps pose unacceptable risk.
+
+### Critical Issues to Fix
+
+1. **[CRITICAL] DATABASE_URL Exposure in CI/CD**
+   - **Location**: `.github/workflows/deploy.yml` line 108
+   - **Risk**: Complete database compromise possible
+   - **Fix Required**:
+   ```yaml
+   # BEFORE (INSECURE):
+   run: supabase db push --db-url="${{ secrets.DATABASE_URL }}"
+   
+   # AFTER (SECURE):
+   env:
+     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+   run: supabase db push --db-url="$DATABASE_URL"
+   ```
+
+2. **[HIGH] Missing CSRF Token Validation Tests**
+   - **Location**: Test suites lack CSRF coverage
+   - **Risk**: Cross-site request forgery attacks
+   - **Fix Required**:
+   ```typescript
+   // Add to app/users/__tests__/actions.test.ts
+   describe('CSRF Protection', () => {
+     it('should reject requests without CSRF token', async () => {
+       const formData = new FormData();
+       formData.append('email', 'test@example.com');
+       // Missing CSRF token
+       const result = await createUser(formData);
+       expect(result).toEqual({ error: 'Invalid CSRF token' });
+     });
+     
+     it('should reject requests with invalid CSRF token', async () => {
+       const formData = new FormData();
+       formData.append('email', 'test@example.com');
+       formData.append('csrf_token', 'invalid-token');
+       const result = await createUser(formData);
+       expect(result).toEqual({ error: 'Invalid CSRF token' });
+     });
+   });
+   ```
+
+3. **[HIGH] CI/CD continue-on-error on Critical Steps**
+   - **Location**: `.github/workflows/*.yml`
+   - **Risk**: Failed deployments could proceed to production
+   - **Fix Required**:
+   ```yaml
+   # Remove ALL instances of:
+   continue-on-error: true
+   # From critical steps like tests, builds, and deployments
+   ```
+
+4. **[HIGH] Exposed Contact Information in Privacy Policy**
+   - **Location**: `app/privacy-policy/page.tsx` lines 275-280
+   - **Risk**: Spam, phishing, social engineering
+   - **Fix Required**:
+   ```typescript
+   // Replace hardcoded contact info:
+   const CONTACT_INFO = {
+     email: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || 'privacy@company.com',
+     phone: process.env.NEXT_PUBLIC_PRIVACY_PHONE || 'Contact Support',
+     address: process.env.NEXT_PUBLIC_PRIVACY_ADDRESS || 'See website'
+   };
+   ```
+
+### Implementation Tasks
+
+1. **Security Patches (2 hours)**
+   - [ ] Fix DATABASE_URL exposure in all CI/CD workflows
+   - [ ] Remove continue-on-error from critical workflow steps
+   - [ ] Move contact info to environment variables
+   - [ ] Add environment variable validation
+
+2. **CSRF Protection Tests (1 hour)**
+   - [ ] Add CSRF validation tests for all server actions
+   - [ ] Test token generation and validation
+   - [ ] Verify error handling for missing/invalid tokens
+   - [ ] Add integration tests for CSRF middleware
+
+3. **Verification (1 hour)**
+   - [ ] Run full security audit
+   - [ ] Verify CI/CD workflows execute correctly
+   - [ ] Test all server actions with CSRF protection
+   - [ ] Validate environment variable usage
+
+### Success Metrics
+- **Security Score**: 82% → 90% (B+ → A-)
+- **CI/CD Reliability**: 100% critical step success
+- **CSRF Test Coverage**: 0% → 100%
+- **Secret Exposure**: 0 instances
+- **Audit Results**: All HIGH/CRITICAL issues resolved
+
+### Validation Checklist
+- [ ] No secrets in code or logs
+- [ ] All CI/CD workflows pass without continue-on-error
+- [ ] CSRF tests pass for all endpoints
+- [ ] Privacy policy uses environment variables
+- [ ] Security audit shows no CRITICAL/HIGH issues
+- [ ] Deployment to staging successful
+- [ ] Production deployment approved
+
+### Resource Requirements
+- **Developer Hours**: 4 hours
+- **Cost**: $400-600
+- **Timeline**: Complete within 24 hours
+- **Resources**: 1 Senior Security Engineer
+
+### Risk if Not Completed
+- **Database Compromise**: CRITICAL - Full data breach possible
+- **CSRF Attacks**: HIGH - User actions could be forged
+- **Failed Deployments**: HIGH - Bad code could reach production
+- **Contact Abuse**: MEDIUM - Spam and phishing risk
+
+### Next Steps After Phase 3.5
+Once these critical issues are resolved:
+1. Deploy security patches to staging
+2. Run full security audit
+3. Get security team sign-off
+4. Deploy to production
+5. Continue with Phase 4 (optional enhancements)
+
+**Status Update**: Phase 3.5 is now **MANDATORY** before production deployment. The application cannot go live until these 4 critical security issues are resolved.
 
 ---
 

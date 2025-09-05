@@ -325,6 +325,14 @@ export class Logger {
   }
 
   /**
+   * Create a child logger with additional context
+   */
+  public createChild(additionalContext: LogContext): Logger {
+    const mergedContext = this.mergeContext(additionalContext);
+    return new Logger(mergedContext);
+  }
+
+  /**
    * Log performance metrics
    */
   public performance(startTime: number, context?: LogContext): void {
