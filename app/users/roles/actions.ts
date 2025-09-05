@@ -17,6 +17,7 @@ export async function createRole(formData: FormData) {
   const displayName = formData.get('display_name') as string;
   const description = formData.get('description') as string;
   const moduleId = formData.get('module_id') as string;
+  const moduleIdForDb = moduleId === 'global' ? null : moduleId;
   const priority = parseInt(formData.get('priority') as string) || 0;
   
   // Validate unique name within module scope
@@ -24,7 +25,7 @@ export async function createRole(formData: FormData) {
     .from('roles')
     .select('id')
     .eq('name', name)
-    .eq('module_id', moduleId || null)
+    .eq('module_id', moduleIdForDb)
     .maybeSingle();
   
   if (existing) {
@@ -38,7 +39,7 @@ export async function createRole(formData: FormData) {
       name,
       display_name: displayName,
       description,
-      module_id: moduleId || null,
+      module_id: moduleIdForDb,
       priority,
       is_system: false,
       created_at: new Date().toISOString(),
@@ -408,7 +409,7 @@ export async function duplicateRole(roleId: string, newName: string) {
     .select('id')
     .eq('name', newName)
     .eq('module_id', originalRole.module_id)
-    .single();
+    .maybeSingle();
   
   if (existing) {
     return { error: 'Role with this name already exists' };

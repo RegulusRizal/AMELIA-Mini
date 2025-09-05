@@ -85,7 +85,7 @@ export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
           name: '',
           display_name: '',
           description: '',
-          module_id: '',
+          module_id: 'global',
           priority: '50'
         });
         router.refresh();
@@ -100,7 +100,7 @@ export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
         name: '',
         display_name: '',
         description: '',
-        module_id: '',
+        module_id: 'global',
         priority: '50'
       });
     }
@@ -180,7 +180,7 @@ export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
                   <SelectValue placeholder="Select a module (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Global Role</SelectItem>
+                  <SelectItem value="global">Global Role</SelectItem>
                   {modules.map((module) => (
                     <SelectItem key={module.id} value={module.id}>
                       {module.display_name}
