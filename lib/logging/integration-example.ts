@@ -107,7 +107,7 @@ export async function exampleApiRoute(request: Request) {
  */
 const fetchUserWithLogging = withErrorLogging(
   async function fetchUser(userId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
