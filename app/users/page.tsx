@@ -137,10 +137,10 @@ function getInitials(user: UserProfile): string {
   return 'U';
 }
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'active':
-      return 'success';
+      return 'default';
     case 'inactive':
       return 'secondary';
     case 'suspended':
@@ -280,7 +280,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeUsers || totalCount}</div>
+            <div className="text-2xl font-bold">{activeUsers}</div>
             <p className="text-xs text-muted-foreground">
               Currently active
             </p>
@@ -399,7 +399,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusColor(user.status) as any}>
+                          <Badge variant={getStatusColor(user.status)}>
                             {user.status || 'active'}
                           </Badge>
                         </TableCell>

@@ -41,7 +41,13 @@ interface EditUserDialogProps {
 export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>(user.status || 'active');
   const router = useRouter();
+  
+  // Update status when user prop changes
+  useEffect(() => {
+    setStatus(user.status || 'active');
+  }, [user]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -149,7 +155,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
             
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <Select name="status" defaultValue={user.status || 'active'}>
+              <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -159,6 +165,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+              <input type="hidden" name="status" value={status} />
             </div>
           </div>
           

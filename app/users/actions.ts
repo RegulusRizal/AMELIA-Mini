@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, createSecureAdminClient } from '@/lib/supabase/admin';
 import { requireSuperAdmin } from '@/lib/auth/helpers';
+import { generateSecurePassword } from '@/lib/utils/password-generator';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -20,7 +21,7 @@ export async function createUser(formData: FormData) {
   const phone = formData.get('phone') as string;
   const employeeId = formData.get('employee_id') as string;
   const status = formData.get('status') as string || 'active';
-  const password = formData.get('password') as string || Math.random().toString(36).slice(-8) + 'Aa1!';
+  const password = formData.get('password') as string || generateSecurePassword(12);
   const roleId = formData.get('role_id') as string;
   
   // Create user in Supabase Auth with admin privileges
@@ -262,7 +263,7 @@ export async function sendPasswordResetEmail(email: string) {
   const supabase = await createClient();
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
   });
   
   if (error) {

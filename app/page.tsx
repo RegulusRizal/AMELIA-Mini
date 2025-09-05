@@ -52,12 +52,15 @@ export default async function Home() {
             </>
           )}
           
-          <a
-            href="/api/test"
-            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Test API Connection
-          </a>
+          {/* Test API Connection button - only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <a
+              href="/api/test"
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Test API Connection (Dev Only)
+            </a>
+          )}
         </div>
       </div>
     </main>

@@ -1,18 +1,27 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
+import { checkSuperAdmin } from '@/lib/auth/helpers';
 
 export async function GET() {
+  // Check if user is super_admin
+  const isSuperAdmin = await checkSuperAdmin();
+  if (!isSuperAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
+    const adminClient = createAdminClient();
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     
-    // Check auth.users table
-    const { data: authUsers, error: authError } = await supabase
-      .from('auth.users')
-      .select('id, email')
-      .limit(10);
+    // Use admin client to list auth users
+    const { data: { users: authUsers }, error: authError } = await adminClient.auth.admin.listUsers({ 
+      page: 1,
+      perPage: 10 
+    });
     
     // Check profiles table
     const { data: profiles, error: profilesError } = await supabase
@@ -39,6 +48,8 @@ export async function GET() {
     
     return NextResponse.json({
       currentUser: user,
+      authUsers: authUsers?.map(u => ({ id: u.id, email: u.email })) || [],
+      authUsersError: authError?.message,
       tableStatus: tableCheck,
       profiles: profiles || [],
       profilesError: profilesError?.message,
@@ -46,6 +57,7 @@ export async function GET() {
       rolesError: rolesError?.message,
       userRoles: userRoles || [],
       userRolesError: userRolesError?.message,
+      authUsersCount: authUsers?.length || 0,
       profilesCount: profiles?.length || 0,
       rolesCount: roles?.length || 0,
       userRolesCount: userRoles?.length || 0

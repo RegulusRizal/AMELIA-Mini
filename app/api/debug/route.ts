@@ -1,8 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { checkSuperAdmin } from '@/lib/auth/helpers'
 
 export async function GET() {
+  // Check if user is super_admin
+  const isSuperAdmin = await checkSuperAdmin()
+  if (!isSuperAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
   try {
     const supabase = await createClient()
     const cookieStore = await cookies()

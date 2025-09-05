@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Loader2 } from 'lucide-react';
+import { generateSecurePassword } from '@/lib/utils/password-generator';
 
 interface Role {
   id: string;
@@ -39,6 +40,8 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('active');
+  const [roleId, setRoleId] = useState('no-role');
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -47,8 +50,8 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
     
     const formData = new FormData(event.currentTarget);
     
-    // Generate a temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+    // Generate a secure temporary password
+    const tempPassword = generateSecurePassword(12);
     formData.append('password', tempPassword);
     
     startTransition(async () => {
@@ -58,6 +61,10 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
         setError(result.error);
       } else {
         setOpen(false);
+        // Reset form state
+        setStatus('active');
+        setRoleId('no-role');
+        setError(null);
         router.refresh();
         // In production, send email with temp password
         alert(`User created successfully! Temporary password: ${tempPassword}`);
@@ -154,7 +161,7 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
             
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <Select name="status" defaultValue="active">
+              <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -164,11 +171,12 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+              <input type="hidden" name="status" value={status} />
             </div>
             
             <div className="grid gap-2">
               <Label htmlFor="role_id">Role (Optional)</Label>
-              <Select name="role_id">
+              <Select value={roleId} onValueChange={setRoleId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -181,6 +189,7 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <input type="hidden" name="role_id" value={roleId} />
               <p className="text-xs text-muted-foreground">
                 You can assign a role to the user now or later from their profile
               </p>

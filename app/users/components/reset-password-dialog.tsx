@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Key, Mail, Copy, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateSecurePassword } from '@/lib/utils/password-generator';
 
 interface ResetPasswordDialogProps {
   user: {
@@ -41,25 +42,12 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
   const [copied, setCopied] = useState(false);
   const router = useRouter();
 
-  const generateSecurePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    // Ensure it has at least one of each required character type
-    password = password.replace(/^./, 'A'); // Uppercase
-    password = password.replace(/^(.{2})/, '$1a'); // Lowercase
-    password = password.replace(/^(.{3})/, '$11'); // Number
-    password = password.replace(/^(.{4})/, '$1!'); // Special
-    return password;
-  };
 
   const handleGeneratePassword = async () => {
     setError(null);
     setSuccess(null);
     
-    const newPassword = generateSecurePassword();
+    const newPassword = generateSecurePassword(12);
     setGeneratedPassword(newPassword);
     
     startTransition(async () => {

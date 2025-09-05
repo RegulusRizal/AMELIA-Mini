@@ -50,12 +50,21 @@ export function ManageRolesDialog({
   useEffect(() => {
     if (open) {
       fetch('/api/roles')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Unable to fetch roles. You may not have permission.');
+          }
+          return res.json();
+        })
         .then(data => {
           setAvailableRoles(data.roles || []);
           setSelectedRoles(currentRoles.map(r => r.id));
+          setError(null);
         })
-        .catch(err => console.error('Error fetching roles:', err));
+        .catch(err => {
+          setError(err.message || 'Failed to fetch roles');
+          console.error('Error fetching roles:', err);
+        });
     }
   }, [open, currentRoles]);
 
