@@ -241,7 +241,15 @@ export default async function UsersPage({ searchParams }: PageProps) {
               Back to Dashboard
             </Button>
           </Link>
-          <AddUserDialog />
+          <div className="flex gap-2">
+            <Link href="/users/roles">
+              <Button variant="outline">
+                <Shield className="mr-2 h-4 w-4" />
+                Manage Roles
+              </Button>
+            </Link>
+            <AddUserDialog />
+          </div>
         </div>
       </div>
 
