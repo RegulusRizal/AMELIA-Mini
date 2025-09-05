@@ -24,7 +24,7 @@ export async function exampleServerAction(formData: FormData) {
       }
     });
     
-    const supabase = createClient();
+    const supabase = await createClient();
     const dbLogger = logDatabaseOperation('INSERT', 'profiles', logger);
     
     const { data, error } = await supabase
