@@ -24,7 +24,18 @@ import {
 } from "@/components/ui/select";
 import { Plus, Loader2 } from 'lucide-react';
 
-export function AddUserDialog({ children }: { children?: React.ReactNode }) {
+interface Role {
+  id: string;
+  name: string;
+  display_name: string;
+}
+
+interface AddUserDialogProps {
+  children?: React.ReactNode;
+  roles?: Role[];
+}
+
+export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +164,26 @@ export function AddUserDialog({ children }: { children?: React.ReactNode }) {
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="role_id">Role (Optional)</Label>
+              <Select name="role_id">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no-role">No role</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.display_name || role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                You can assign a role to the user now or later from their profile
+              </p>
             </div>
           </div>
           

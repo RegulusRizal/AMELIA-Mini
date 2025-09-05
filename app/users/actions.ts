@@ -21,6 +21,7 @@ export async function createUser(formData: FormData) {
   const employeeId = formData.get('employee_id') as string;
   const status = formData.get('status') as string || 'active';
   const password = formData.get('password') as string || Math.random().toString(36).slice(-8) + 'Aa1!';
+  const roleId = formData.get('role_id') as string;
   
   // Create user in Supabase Auth with admin privileges
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
@@ -57,6 +58,27 @@ export async function createUser(formData: FormData) {
     // Try to clean up auth user if profile update fails
     await adminClient.auth.admin.deleteUser(authData.user!.id);
     return { error: profileError.message };
+  }
+  
+  // Assign role if one was selected (and not "no-role")
+  if (roleId && roleId !== 'no-role') {
+    const supabase = await createClient();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    const { error: roleError } = await adminClient
+      .from('user_roles')
+      .insert({
+        user_id: authData.user!.id,
+        role_id: roleId,
+        assigned_by: currentUser?.id,
+        assigned_at: new Date().toISOString(),
+      });
+    
+    if (roleError) {
+      console.error('Error assigning role:', roleError);
+      // User was created successfully, just role assignment failed
+      // We don't delete the user in this case
+    }
   }
   
   revalidatePath('/users');

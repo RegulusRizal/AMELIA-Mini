@@ -204,6 +204,12 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const userIds = users.map(u => u.id);
   const userRoles = await getUserRoles(userIds);
   
+  // Get available roles for the add user dialog
+  const { data: availableRoles } = await supabase
+    .from('roles')
+    .select('id, name, display_name')
+    .order('priority', { ascending: false });
+  
   // Create a map of user roles for easy lookup
   const rolesByUserId = userRoles.reduce((acc, ur) => {
     if (!acc[ur.user_id]) {
@@ -248,7 +254,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
                 Manage Roles
               </Button>
             </Link>
-            <AddUserDialog />
+            <AddUserDialog roles={availableRoles || []} />
           </div>
         </div>
       </div>
@@ -406,8 +412,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
                                 </Badge>
                               ))}
                             </div>
-                          ) : user.id === users[0]?.id ? (
-                            <Badge variant="outline">Super Admin</Badge>
                           ) : (
                             <span className="text-muted-foreground">No role</span>
                           )}
@@ -464,7 +468,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
               </p>
               {!searchParams?.search && (
                 <div className="mt-6">
-                  <AddUserDialog />
+                  <AddUserDialog roles={availableRoles || []} />
                 </div>
               )}
             </div>
