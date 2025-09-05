@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateUser } from '../actions';
 import {
@@ -38,7 +38,7 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
+export const EditUserDialog = React.memo(function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>(user.status || 'active');
@@ -79,7 +79,11 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
           </DialogHeader>
           
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div 
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+              role="alert"
+              aria-live="polite"
+            >
               {error}
             </div>
           )}
@@ -92,34 +96,44 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                 value={user.email}
                 disabled
                 className="bg-muted"
+                aria-describedby="email-note"
               />
-              <p className="text-xs text-muted-foreground">
+              <p id="email-note" className="text-xs text-muted-foreground">
                 Email cannot be changed
               </p>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="first_name">First Name</Label>
-                <Input
-                  id="first_name"
-                  name="first_name"
-                  defaultValue={user.first_name || ''}
-                  placeholder="John"
-                  required
-                />
+            <fieldset>
+              <legend className="sr-only">Personal Information</legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="first_name">
+                    First Name <span className="text-red-500" aria-label="required">*</span>
+                  </Label>
+                  <Input
+                    id="first_name"
+                    name="first_name"
+                    defaultValue={user.first_name || ''}
+                    placeholder="John"
+                    required
+                    aria-required="true"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="last_name">
+                    Last Name <span className="text-red-500" aria-label="required">*</span>
+                  </Label>
+                  <Input
+                    id="last_name"
+                    name="last_name"
+                    defaultValue={user.last_name || ''}
+                    placeholder="Doe"
+                    required
+                    aria-required="true"
+                  />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last_name">Last Name</Label>
-                <Input
-                  id="last_name"
-                  name="last_name"
-                  defaultValue={user.last_name || ''}
-                  placeholder="Doe"
-                  required
-                />
-              </div>
-            </div>
+            </fieldset>
             
             <div className="grid gap-2">
               <Label htmlFor="display_name">Display Name</Label>
@@ -131,32 +145,39 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  defaultValue={user.phone || ''}
-                  placeholder="+1 555-0123"
-                />
+            <fieldset>
+              <legend className="sr-only">Contact and Employee Information</legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    defaultValue={user.phone || ''}
+                    placeholder="+1 555-0123"
+                    aria-describedby="phone-edit-description"
+                  />
+                  <span id="phone-edit-description" className="sr-only">Optional phone number</span>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="employee_id">Employee ID</Label>
+                  <Input
+                    id="employee_id"
+                    name="employee_id"
+                    defaultValue={user.employee_id || ''}
+                    placeholder="EMP001"
+                    aria-describedby="employee-edit-description"
+                  />
+                  <span id="employee-edit-description" className="sr-only">Optional employee identifier</span>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="employee_id">Employee ID</Label>
-                <Input
-                  id="employee_id"
-                  name="employee_id"
-                  defaultValue={user.employee_id || ''}
-                  placeholder="EMP001"
-                />
-              </div>
-            </div>
+            </fieldset>
             
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="edit-status-select">Status</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
+                <SelectTrigger id="edit-status-select" aria-label="Select user status">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,4 +214,6 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+EditUserDialog.displayName = 'EditUserDialog';

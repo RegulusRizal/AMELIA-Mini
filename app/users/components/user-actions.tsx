@@ -51,31 +51,45 @@ export function UserActions({ user, userRoles = [] }: UserActionsProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            className="h-8 w-8 p-0"
+            aria-label={`Actions for ${user.display_name || user.email}`}
+          >
+            <span className="sr-only">Open actions menu</span>
+            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
+          <DropdownMenuItem 
+            onClick={() => setEditOpen(true)}
+            aria-label={`Edit user ${user.display_name || user.email}`}
+          >
+            <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
             Edit User
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRolesOpen(true)}>
-            <Shield className="mr-2 h-4 w-4" />
+          <DropdownMenuItem 
+            onClick={() => setRolesOpen(true)}
+            aria-label={`Manage roles for ${user.display_name || user.email}`}
+          >
+            <Shield className="mr-2 h-4 w-4" aria-hidden="true" />
             Manage Roles
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setResetPasswordOpen(true)}>
-            <Key className="mr-2 h-4 w-4" />
+          <DropdownMenuItem 
+            onClick={() => setResetPasswordOpen(true)}
+            aria-label={`Reset password for ${user.display_name || user.email}`}
+          >
+            <Key className="mr-2 h-4 w-4" aria-hidden="true" />
             Reset Password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
             onClick={() => setDeleteOpen(true)}
+            aria-label={`Delete user ${user.display_name || user.email}`}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
             Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>

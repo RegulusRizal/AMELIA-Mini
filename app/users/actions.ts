@@ -6,6 +6,7 @@ import { requireSuperAdmin } from '@/lib/auth/helpers';
 import { generateSecurePassword } from '@/lib/utils/password-generator';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { logger } from '@/lib/logging';
 
 export async function createUser(formData: FormData) {
   // Verify current user is super_admin
@@ -32,7 +33,11 @@ export async function createUser(formData: FormData) {
   });
   
   if (authError) {
-    console.error('Error creating auth user:', authError);
+    logger.error('Error creating auth user', authError as Error, {
+      module: 'users',
+      action: 'createUser',
+      metadata: { email }
+    });
     return { error: authError.message };
   }
   
@@ -55,7 +60,12 @@ export async function createUser(formData: FormData) {
     });
   
   if (profileError) {
-    console.error('Error updating profile:', profileError);
+    logger.error('Error updating profile', profileError as Error, {
+      module: 'users',
+      action: 'createUser',
+      userId: authData.user!.id,
+      metadata: { email }
+    });
     // Try to clean up auth user if profile update fails
     await adminClient.auth.admin.deleteUser(authData.user!.id);
     return { error: profileError.message };
@@ -76,7 +86,12 @@ export async function createUser(formData: FormData) {
       });
     
     if (roleError) {
-      console.error('Error assigning role:', roleError);
+      logger.error('Error assigning role', roleError as Error, {
+        module: 'users',
+        action: 'createUser',
+        userId: authData.user!.id,
+        metadata: { roleId }
+      });
       // User was created successfully, just role assignment failed
       // We don't delete the user in this case
     }
@@ -114,7 +129,11 @@ export async function updateUser(userId: string, formData: FormData) {
     .eq('id', userId);
   
   if (error) {
-    console.error('Error updating user:', error);
+    logger.error('Error updating user', error as Error, {
+      module: 'users',
+      action: 'updateUser',
+      userId
+    });
     return { error: error.message };
   }
   
@@ -140,7 +159,11 @@ export async function deleteUser(userId: string) {
   const { error } = await adminClient.auth.admin.deleteUser(userId);
   
   if (error) {
-    console.error('Error deleting user:', error);
+    logger.error('Error deleting user', error as Error, {
+      module: 'users',
+      action: 'deleteUser',
+      userId
+    });
     return { error: error.message };
   }
   
@@ -168,7 +191,12 @@ export async function assignRole(userId: string, roleId: string) {
     });
   
   if (error) {
-    console.error('Error assigning role:', error);
+    logger.error('Error assigning role', error as Error, {
+      module: 'users',
+      action: 'assignRole',
+      userId,
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -190,7 +218,12 @@ export async function removeRole(userId: string, roleId: string) {
     .eq('role_id', roleId);
   
   if (error) {
-    console.error('Error removing role:', error);
+    logger.error('Error removing role', error as Error, {
+      module: 'users',
+      action: 'removeRole',
+      userId,
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -214,7 +247,12 @@ export async function updateUserStatus(userId: string, status: 'active' | 'inact
     .eq('id', userId);
   
   if (error) {
-    console.error('Error updating user status:', error);
+    logger.error('Error updating user status', error as Error, {
+      module: 'users',
+      action: 'updateUserStatus',
+      userId,
+      metadata: { status }
+    });
     return { error: error.message };
   }
   
@@ -235,7 +273,11 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   });
   
   if (error) {
-    console.error('Error resetting password:', error);
+    logger.error('Error resetting password', error as Error, {
+      module: 'users',
+      action: 'resetUserPassword',
+      userId
+    });
     return { error: error.message };
   }
   
@@ -267,7 +309,11 @@ export async function sendPasswordResetEmail(email: string) {
   });
   
   if (error) {
-    console.error('Error sending password reset email:', error);
+    logger.error('Error sending password reset email', error as Error, {
+      module: 'users',
+      action: 'sendPasswordResetEmail',
+      metadata: { email }
+    });
     return { error: error.message };
   }
   

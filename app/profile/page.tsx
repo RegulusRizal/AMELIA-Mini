@@ -71,30 +71,30 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-4 w-4" />
+                <Button variant="ghost" size="icon" aria-label="Back to dashboard">
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </Link>
               <h1 className="text-2xl font-bold">Profile Settings</h1>
             </div>
           </div>
         </div>
-      </div>
+      </header>
       
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sidebar - Profile Summary */}
-          <div className="lg:col-span-1">
+          <aside className="lg:col-span-1" aria-label="Profile summary">
             <Card>
               <CardHeader className="text-center">
-                <Avatar className="h-24 w-24 mx-auto mb-4">
-                  <AvatarImage src={profile?.avatar_url} />
+                <Avatar className="h-24 w-24 mx-auto mb-4" aria-label="Profile avatar">
+                  <AvatarImage src={profile?.avatar_url} alt="Profile picture" />
                   <AvatarFallback className="text-2xl">
                     {getInitials(profile?.display_name || `${profile?.first_name} ${profile?.last_name}`, user.email)}
                   </AvatarFallback>
@@ -105,7 +105,7 @@ export default async function ProfilePage() {
               <CardContent className="space-y-4">
                 {profile?.employee_id && (
                   <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-muted-foreground" />
+                    <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span className="text-muted-foreground">Employee ID:</span>
                     <span className="font-medium">{profile.employee_id}</span>
                   </div>
@@ -113,39 +113,43 @@ export default async function ProfilePage() {
                 
                 {profile?.phone && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <Phone className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span>{profile.phone}</span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{user.email}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span className="text-muted-foreground">Joined:</span>
-                  <span>{formatDate(profile?.created_at || user.created_at)}</span>
+                  <time dateTime={profile?.created_at || user.created_at}>
+                    {formatDate(profile?.created_at || user.created_at)}
+                  </time>
                 </div>
                 
                 {profile?.last_active_at && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <Activity className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span className="text-muted-foreground">Last active:</span>
-                    <span>{formatDate(profile.last_active_at)}</span>
+                    <time dateTime={profile.last_active_at}>
+                      {formatDate(profile.last_active_at)}
+                    </time>
                   </div>
                 )}
                 
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span className="text-sm font-medium">Roles</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" role="list" aria-label="Assigned roles">
                     {roles.length > 0 ? (
                       roles.map((role: any) => (
-                        <Badge key={role.id} variant="secondary">
+                        <Badge key={role.id} variant="secondary" role="listitem">
                           {role.display_name}
                         </Badge>
                       ))
@@ -159,24 +163,25 @@ export default async function ProfilePage() {
                   <Badge 
                     variant={profile?.status === 'active' ? 'default' : profile?.status === 'inactive' ? 'secondary' : 'destructive'}
                     className="w-full justify-center"
+                    aria-label={`Account status: ${profile?.status || 'active'}`}
                   >
                     {profile?.status?.toUpperCase() || 'ACTIVE'}
                   </Badge>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </aside>
           
           {/* Main Content - Tabs */}
-          <div className="lg:col-span-2">
+          <section className="lg:col-span-2" aria-label="Profile settings tabs">
             <Tabs defaultValue="profile" className="space-y-4">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="profile">
-                  <User className="h-4 w-4 mr-2" />
+                <TabsTrigger value="profile" aria-label="Profile information tab">
+                  <User className="h-4 w-4 mr-2" aria-hidden="true" />
                   Profile
                 </TabsTrigger>
-                <TabsTrigger value="security">
-                  <Key className="h-4 w-4 mr-2" />
+                <TabsTrigger value="security" aria-label="Security settings tab">
+                  <Key className="h-4 w-4 mr-2" aria-hidden="true" />
                   Security
                 </TabsTrigger>
               </TabsList>
@@ -184,7 +189,7 @@ export default async function ProfilePage() {
               <TabsContent value="profile">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
+                    <h2 className="text-xl font-semibold">Profile Information</h2>
                     <CardDescription>
                       Update your personal information and contact details
                     </CardDescription>
@@ -198,7 +203,7 @@ export default async function ProfilePage() {
               <TabsContent value="security">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Change Password</CardTitle>
+                    <h2 className="text-xl font-semibold">Change Password</h2>
                     <CardDescription>
                       Update your password to keep your account secure
                     </CardDescription>
@@ -209,7 +214,7 @@ export default async function ProfilePage() {
                 </Card>
               </TabsContent>
             </Tabs>
-          </div>
+          </section>
         </div>
       </div>
     </div>

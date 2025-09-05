@@ -38,17 +38,45 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  isIconOnly?: boolean
+  isPressed?: boolean
+  loading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ 
+    className, 
+    variant, 
+    size, 
+    asChild = false, 
+    isIconOnly = false,
+    isPressed,
+    loading = false,
+    disabled,
+    children,
+    "aria-label": ariaLabel,
+    ...props 
+  }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    // Ensure aria-label for icon-only buttons
+    const needsAriaLabel = isIconOnly || (size === "icon" && !ariaLabel)
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        aria-label={needsAriaLabel && !ariaLabel ? "Button" : ariaLabel}
+        aria-pressed={isPressed !== undefined ? isPressed : undefined}
+        aria-busy={loading}
+        disabled={disabled || loading}
         {...props}
-      />
+      >
+        {loading && (
+          <span className="sr-only">Loading...</span>
+        )}
+        {children}
+      </Comp>
     )
   }
 )

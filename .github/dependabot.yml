@@ -1,0 +1,142 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    target-branch: "master"
+    reviewers:
+      - "royshemuelyabut"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+    rebase-strategy: "auto"
+    versioning-strategy: increase
+    # Group updates to reduce PR noise
+    groups:
+      # Group all minor and patch updates together
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group all Next.js related packages
+      nextjs:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "eslint-config-next"
+      # Group all React packages
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Group all TypeScript packages
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+      # Group all testing packages
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "jest"
+          - "@types/jest"
+          - "vitest"
+      # Group all Supabase packages
+      supabase:
+        patterns:
+          - "@supabase/*"
+          - "supabase"
+      # Group all UI/styling packages
+      ui-styling:
+        patterns:
+          - "tailwind*"
+          - "@radix-ui/*"
+          - "class-variance-authority"
+          - "clsx"
+          - "lucide-react"
+    # Ignore specific dependencies
+    ignore:
+      # Add any dependencies that should not be auto-updated
+      # - dependency-name: "package-name"
+      #   versions: ["1.x", "2.x"]
+    # Allow specific updates
+    allow:
+      - dependency-type: "all"
+
+  # Enable security updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "02:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    target-branch: "master"
+    labels:
+      - "security"
+      - "dependencies"
+    commit-message:
+      prefix: "security"
+    pull-request-branch-name:
+      separator: "/"
+    # Only security updates
+    allow:
+      - dependency-type: "all"
+    # Prioritize security updates
+    priority: 1
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    target-branch: "master"
+    reviewers:
+      - "royshemuelyabut"
+    labels:
+      - "github-actions"
+      - "ci/cd"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+
+  # Docker dependencies (if applicable)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    target-branch: "master"
+    labels:
+      - "docker"
+      - "dependencies"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"

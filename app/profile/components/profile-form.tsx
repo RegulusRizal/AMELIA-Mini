@@ -66,22 +66,23 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant="destructive" role="alert" aria-live="polite">
+          <AlertCircle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       
       {success && (
-        <Alert className="border-green-500 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
+        <Alert className="border-green-500 bg-green-50" role="status" aria-live="polite">
+          <CheckCircle className="h-4 w-4 text-green-600" aria-hidden="true" />
           <AlertDescription className="text-green-600">
             Your profile has been updated successfully.
           </AlertDescription>
         </Alert>
       )}
       
-      <div className="grid gap-4 md:grid-cols-2">
+      <fieldset className="grid gap-4 md:grid-cols-2">
+        <legend className="sr-only">Personal Information</legend>
         <div className="space-y-2">
           <Label htmlFor="first_name">First Name</Label>
           <Input
@@ -92,7 +93,9 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
             onChange={handleChange}
             placeholder="Enter your first name"
             disabled={isPending}
+            aria-describedby="first_name-desc"
           />
+          <span id="first_name-desc" className="sr-only">Your legal first name</span>
         </div>
         
         <div className="space-y-2">
@@ -105,9 +108,11 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
             onChange={handleChange}
             placeholder="Enter your last name"
             disabled={isPending}
+            aria-describedby="last_name-desc"
           />
+          <span id="last_name-desc" className="sr-only">Your legal last name</span>
         </div>
-      </div>
+      </fieldset>
       
       <div className="space-y-2">
         <Label htmlFor="display_name">Display Name</Label>
@@ -119,8 +124,9 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
           onChange={handleChange}
           placeholder="Enter your display name"
           disabled={isPending}
+          aria-describedby="display_name-help"
         />
-        <p className="text-sm text-muted-foreground">
+        <p id="display_name-help" className="text-sm text-muted-foreground">
           This is how your name will appear throughout the application
         </p>
       </div>
@@ -135,8 +141,9 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
           onChange={handleChange}
           placeholder="Enter your email"
           disabled={isPending}
+          aria-describedby="email-help"
         />
-        <p className="text-sm text-muted-foreground">
+        <p id="email-help" className="text-sm text-muted-foreground">
           Note: Changing your email requires verification
         </p>
       </div>
@@ -151,22 +158,25 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
           onChange={handleChange}
           placeholder="Enter your phone number"
           disabled={isPending}
+          aria-describedby="phone-help"
         />
+        <span id="phone-help" className="sr-only">Optional contact phone number</span>
       </div>
       
       <Button 
         type="submit" 
         disabled={isPending}
         className="w-full"
+        aria-label={isPending ? "Updating profile, please wait" : "Save profile changes"}
       >
         {isPending ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Updating Profile...
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            <span aria-live="polite">Updating Profile...</span>
           </>
         ) : (
           <>
-            <Save className="mr-2 h-4 w-4" />
+            <Save className="mr-2 h-4 w-4" aria-hidden="true" />
             Save Changes
           </>
         )}

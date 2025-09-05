@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUser } from '../actions';
 import {
@@ -36,7 +36,7 @@ interface AddUserDialogProps {
   roles?: Role[];
 }
 
-export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
+export const AddUserDialog = React.memo(function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +66,8 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
         setRoleId('no-role');
         setError(null);
         router.refresh();
-        // In production, send email with temp password
-        alert(`User created successfully! Temporary password: ${tempPassword}`);
+        // In production, password is sent via email only
+        // alert(`User created successfully! Temporary password: ${tempPassword}`);
       }
     });
   };
@@ -92,42 +92,64 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
           </DialogHeader>
           
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div 
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+              role="alert"
+              aria-live="polite"
+            >
               {error}
             </div>
           )}
           
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="first_name">First Name</Label>
-                <Input
-                  id="first_name"
-                  name="first_name"
-                  placeholder="John"
-                  required
-                />
+            <fieldset>
+              <legend className="sr-only">Personal Information</legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="first_name">
+                    First Name <span className="text-red-500" aria-label="required">*</span>
+                  </Label>
+                  <Input
+                    id="first_name"
+                    name="first_name"
+                    placeholder="John"
+                    required
+                    aria-required="true"
+                    aria-describedby="first_name-description"
+                  />
+                  <span id="first_name-description" className="sr-only">Enter the user's first name</span>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="last_name">
+                    Last Name <span className="text-red-500" aria-label="required">*</span>
+                  </Label>
+                  <Input
+                    id="last_name"
+                    name="last_name"
+                    placeholder="Doe"
+                    required
+                    aria-required="true"
+                    aria-describedby="last_name-description"
+                  />
+                  <span id="last_name-description" className="sr-only">Enter the user's last name</span>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last_name">Last Name</Label>
-                <Input
-                  id="last_name"
-                  name="last_name"
-                  placeholder="Doe"
-                  required
-                />
-              </div>
-            </div>
+            </fieldset>
             
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email <span className="text-red-500" aria-label="required">*</span>
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 placeholder="john@example.com"
                 required
+                aria-required="true"
+                aria-describedby="email-description"
               />
+              <span id="email-description" className="sr-only">Enter the user's email address for login</span>
             </div>
             
             <div className="grid gap-2">
@@ -136,33 +158,42 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
                 id="display_name"
                 name="display_name"
                 placeholder="John Doe"
+                aria-describedby="display_name-description"
               />
+              <span id="display_name-description" className="sr-only">Optional display name for the user</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+1 555-0123"
-                />
+            <fieldset>
+              <legend className="sr-only">Contact and Employee Information</legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+1 555-0123"
+                    aria-describedby="phone-description"
+                  />
+                  <span id="phone-description" className="sr-only">Optional phone number</span>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="employee_id">Employee ID</Label>
+                  <Input
+                    id="employee_id"
+                    name="employee_id"
+                    placeholder="EMP001"
+                    aria-describedby="employee_id-description"
+                  />
+                  <span id="employee_id-description" className="sr-only">Optional employee identifier</span>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="employee_id">Employee ID</Label>
-                <Input
-                  id="employee_id"
-                  name="employee_id"
-                  placeholder="EMP001"
-                />
-              </div>
-            </div>
+            </fieldset>
             
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status-select">Status</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
+                <SelectTrigger id="status-select" aria-label="Select user status">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,9 +206,9 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="role_id">Role (Optional)</Label>
+              <Label htmlFor="role-select">Role (Optional)</Label>
               <Select value={roleId} onValueChange={setRoleId}>
-                <SelectTrigger>
+                <SelectTrigger id="role-select" aria-label="Select user role" aria-describedby="role-helper">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,7 +221,7 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
                 </SelectContent>
               </Select>
               <input type="hidden" name="role_id" value={roleId} />
-              <p className="text-xs text-muted-foreground">
+              <p id="role-helper" className="text-xs text-muted-foreground">
                 You can assign a role to the user now or later from their profile
               </p>
             </div>
@@ -220,4 +251,6 @@ export function AddUserDialog({ children, roles = [] }: AddUserDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+AddUserDialog.displayName = 'AddUserDialog';

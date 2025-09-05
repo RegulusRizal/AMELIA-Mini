@@ -1,0 +1,269 @@
+name: Scheduled Tasks
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - security-scan
+          - dependency-check
+          - cleanup
+          - backup
+
+jobs:
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'security-scan'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run npm audit
+        run: |
+          npm audit --production
+          npm audit --audit-level=moderate || true
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Upload security results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+      - name: Create issue for vulnerabilities
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Security Vulnerabilities Detected - ${date}`,
+              body: `Security scan found vulnerabilities that need attention.
+              
+              Check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.`,
+              labels: ['security', 'priority:high']
+            });
+
+  dependency-check:
+    name: Check for Outdated Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'dependency-check'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Check for outdated dependencies
+        run: |
+          npm outdated || true
+          
+          # Create a report of outdated dependencies
+          npm outdated --json > outdated.json || true
+          
+          # Count outdated dependencies
+          outdated_count=$(npm outdated --parseable | wc -l)
+          echo "Found $outdated_count outdated dependencies"
+          
+          if [ "$outdated_count" -gt "20" ]; then
+            echo "::warning::More than 20 outdated dependencies found. Consider updating."
+          fi
+
+      - name: Upload outdated report
+        uses: actions/upload-artifact@v3
+        with:
+          name: outdated-dependencies
+          path: outdated.json
+          retention-days: 7
+
+  cleanup:
+    name: Cleanup Old Artifacts and Caches
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'cleanup'
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 10
+
+      - name: Delete old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '7 days'
+          skip-tags: true
+          skip-recent: 5
+
+  database-backup:
+    name: Database Backup Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'backup'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: |
+          wget -qO- https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xvz
+          sudo mv supabase /usr/local/bin/
+
+      - name: Check database backup status
+        run: |
+          echo "Checking database backup status..."
+          # This is a placeholder - implement actual backup verification
+          # based on your Supabase backup configuration
+          echo "Database backups are managed by Supabase"
+
+  lighthouse-monitoring:
+    name: Lighthouse Performance Monitoring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build application
+        run: npm run build
+        env:
+          SKIP_ENV_VALIDATION: true
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/dashboard
+            http://localhost:3000/users
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Store Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci
+          retention-days: 30
+
+  health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all'
+    steps:
+      - name: Check production health
+        run: |
+          # Replace with your actual production URL
+          PROD_URL="${{ secrets.PRODUCTION_URL }}"
+          
+          if [ -z "$PROD_URL" ]; then
+            echo "Production URL not configured"
+            exit 0
+          fi
+          
+          # Check homepage
+          response=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL)
+          if [ "$response" != "200" ]; then
+            echo "::error::Production site returned status code $response"
+            exit 1
+          fi
+          
+          # Check API health endpoint
+          api_response=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/api/health)
+          if [ "$api_response" != "200" ]; then
+            echo "::warning::API health check returned status code $api_response"
+          fi
+          
+          echo "Production health check passed"
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Production Health Check Failed',
+              body: `The scheduled production health check failed.
+              
+              Check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.`,
+              labels: ['production', 'priority:critical', 'incident']
+            });
+
+  report:
+    name: Generate Daily Report
+    runs-on: ubuntu-latest
+    needs: [security-scan, dependency-check, health-check]
+    if: always() && (github.event_name == 'schedule' || github.event.inputs.task == 'all')
+    steps:
+      - name: Generate report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            const jobs = ${{ toJson(needs) }};
+            
+            let report = `# Daily Automated Report - ${date}\n\n`;
+            report += `## Job Results\n\n`;
+            
+            for (const [job, result] of Object.entries(jobs)) {
+              const status = result.result === 'success' ? '✅' : '❌';
+              report += `- ${status} ${job}: ${result.result}\n`;
+            }
+            
+            report += `\n## Actions Required\n\n`;
+            
+            if (jobs['security-scan'].result !== 'success') {
+              report += `- Review and fix security vulnerabilities\n`;
+            }
+            
+            if (jobs['dependency-check'].result !== 'success') {
+              report += `- Update outdated dependencies\n`;
+            }
+            
+            if (jobs['health-check'].result !== 'success') {
+              report += `- Investigate production health check failure\n`;
+            }
+            
+            console.log(report);

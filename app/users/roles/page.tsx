@@ -109,13 +109,13 @@ export default async function RolesPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
               <Link href="/users">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-4 w-4" />
+                <Button variant="ghost" size="icon" aria-label="Back to users page">
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </Link>
               <div>
@@ -131,15 +131,15 @@ export default async function RolesPage() {
             </CreateRoleDialog>
           </div>
         </div>
-      </div>
+      </header>
       
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+        <section aria-label="Role statistics" className="grid gap-4 md:grid-cols-4">
+          <Card aria-label="Total roles statistic">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Roles</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
+              <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{roles?.length || 0}</div>
@@ -149,10 +149,10 @@ export default async function RolesPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card aria-label="System roles statistic">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">System Roles</CardTitle>
-              <Lock className="h-4 w-4 text-muted-foreground" />
+              <Lock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{systemRolesCount}</div>
@@ -160,10 +160,10 @@ export default async function RolesPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card aria-label="Custom roles statistic">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Custom Roles</CardTitle>
-              <Puzzle className="h-4 w-4 text-muted-foreground" />
+              <Puzzle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{customRolesCount}</div>
@@ -171,17 +171,17 @@ export default async function RolesPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card aria-label="Role assignments statistic">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Role Assignments</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalUsers}</div>
               <p className="text-xs text-muted-foreground">Total user-role mappings</p>
             </CardContent>
           </Card>
-        </div>
+        </section>
         
         {/* Main Content */}
         <div className="mt-6">
@@ -189,20 +189,23 @@ export default async function RolesPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>All Roles</CardTitle>
+                  <h2 className="text-xl font-semibold">All Roles</h2>
                   <CardDescription>Manage roles and their permissions</CardDescription>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" role="search">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" aria-hidden="true" />
+                    <label htmlFor="role-search" className="sr-only">Search roles</label>
                     <Input 
+                      id="role-search"
                       placeholder="Search roles..." 
                       className="pl-9 w-64"
                       disabled
+                      aria-label="Search roles"
                     />
                   </div>
                   <Select disabled>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40" aria-label="Filter by module">
                       <SelectValue placeholder="All Modules" />
                     </SelectTrigger>
                     <SelectContent>
@@ -216,7 +219,7 @@ export default async function RolesPage() {
                     </SelectContent>
                   </Select>
                   <Select disabled>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-32" aria-label="Filter by type">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>

@@ -1,5 +1,6 @@
 // Full-Featured User Management Page
 import { createClient } from '@/lib/supabase/server';
+import { getCachedUsers } from '@/lib/cache/data-fetchers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,15 +49,14 @@ interface UserProfile {
   created_at: string;
   updated_at: string;
   last_active_at?: string;
-}
-
-interface UserRole {
-  user_id: string;
-  role: {
-    id: string;
-    name: string;
-    display_name: string;
-  } | null;
+  user_roles?: Array<{
+    role_id: string;
+    role: {
+      id: string;
+      name: string;
+      display_name: string;
+    } | null;
+  }>;
 }
 
 interface PageProps {
@@ -76,9 +76,16 @@ async function getUsers(searchParams: PageProps['searchParams']) {
   const search = searchParams?.search || '';
   const status = searchParams?.status || 'all';
   
+  // Single joined query to fetch users with their roles
   let query = supabase
     .from('profiles')
-    .select('*', { count: 'exact' })
+    .select(`
+      *,
+      user_roles(
+        role_id,
+        role:roles(id, name, display_name)
+      )
+    `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
   
@@ -99,30 +106,10 @@ async function getUsers(searchParams: PageProps['searchParams']) {
     return { users: [], totalCount: 0 };
   }
   
-  return { users: data as UserProfile[] || [], totalCount: count || 0 };
+  // Type assertion with unknown first for safety
+  return { users: (data as unknown as UserProfile[]) || [], totalCount: count || 0 };
 }
 
-async function getUserRoles(userIds: string[]): Promise<UserRole[]> {
-  if (userIds.length === 0) return [];
-  
-  const supabase = await createClient();
-  
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select(`
-      user_id,
-      role:roles(id, name, display_name)
-    `)
-    .in('user_id', userIds);
-  
-  if (error) {
-    console.error('Error fetching user roles:', error);
-    return [];
-  }
-  
-  // Type assertion with unknown first for safety
-  return (data as unknown as UserRole[]) || [];
-}
 
 function getInitials(user: UserProfile): string {
   if (user.first_name && user.last_name) {
@@ -199,10 +186,8 @@ export default async function UsersPage({ searchParams }: PageProps) {
     );
   }
   
-  // Get users and roles
+  // Get users with roles in a single query
   const { users, totalCount } = await getUsers(searchParams);
-  const userIds = users.map(u => u.id);
-  const userRoles = await getUserRoles(userIds);
   
   // Get available roles for the add user dialog
   const { data: availableRoles } = await supabase
@@ -210,14 +195,17 @@ export default async function UsersPage({ searchParams }: PageProps) {
     .select('id, name, display_name')
     .order('priority', { ascending: false });
   
-  // Create a map of user roles for easy lookup
-  const rolesByUserId = userRoles.reduce((acc, ur) => {
-    if (!acc[ur.user_id]) {
-      acc[ur.user_id] = [];
+  // Create a map of user roles for easy lookup (now extracted from the users data)
+  const rolesByUserId = users.reduce((acc, user) => {
+    const roles: Array<{id: string; name: string; display_name: string}> = [];
+    if (user.user_roles) {
+      user.user_roles.forEach(ur => {
+        if (ur.role) {
+          roles.push(ur.role);
+        }
+      });
     }
-    if (ur.role) {
-      acc[ur.user_id].push(ur.role);
-    }
+    acc[user.id] = roles;
     return acc;
   }, {} as Record<string, Array<{id: string; name: string; display_name: string}>>);
   
@@ -233,7 +221,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-muted-foreground">
@@ -257,14 +245,14 @@ export default async function UsersPage({ searchParams }: PageProps) {
             <AddUserDialog roles={availableRoles || []} />
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <section aria-label="User statistics" className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card aria-label="Total users statistic">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalCount}</div>
@@ -274,10 +262,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card aria-label="Active users statistic">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <UserCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeUsers}</div>
@@ -287,10 +275,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card aria-label="Inactive users statistic">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactive Users</CardTitle>
-            <UserX className="h-4 w-4 text-muted-foreground" />
+            <UserX className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{inactiveUsers}</div>
@@ -300,10 +288,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card aria-label="Suspended users statistic">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Suspended</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{suspendedUsers}</div>
@@ -312,39 +300,47 @@ export default async function UsersPage({ searchParams }: PageProps) {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       {/* Search Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
+          <h2 className="text-xl font-semibold">Search & Filter</h2>
           <CardDescription>
             Find users by name, email, or filter by status
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action="/users" method="GET" className="flex gap-4">
+          <form action="/users" method="GET" className="flex gap-4" role="search">
             <div className="flex-1">
+              <label htmlFor="user-search" className="sr-only">Search users</label>
               <input
+                id="user-search"
                 type="text"
                 name="search"
                 placeholder="Search users..."
                 defaultValue={searchParams?.search || ''}
+                aria-label="Search users by name or email"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
             </div>
-            <select
-              name="status"
-              defaultValue={searchParams?.status || 'all'}
-              className="px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </select>
-            <Button type="submit">
-              <Search className="mr-2 h-4 w-4" />
+            <div>
+              <label htmlFor="status-filter" className="sr-only">Filter by status</label>
+              <select
+                id="status-filter"
+                name="status"
+                defaultValue={searchParams?.status || 'all'}
+                aria-label="Filter users by status"
+                className="px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+            <Button type="submit" aria-label="Search users">
+              <Search className="mr-2 h-4 w-4" aria-hidden="true" />
               Search
             </Button>
           </form>
@@ -354,22 +350,26 @@ export default async function UsersPage({ searchParams }: PageProps) {
       {/* User List */}
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <h2 className="text-xl font-semibold">Users</h2>
           <CardDescription>
             A list of all users in the system
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div aria-live="polite" aria-atomic="true" className="sr-only">
+            {searchParams?.search && `Found ${users.length} users matching your search`}
+          </div>
           {users.length > 0 ? (
             <div className="space-y-4">
               <Table>
+                <caption className="sr-only">List of users with their status, roles, and actions</caption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead scope="col">User</TableHead>
+                    <TableHead scope="col">Status</TableHead>
+                    <TableHead scope="col">Role</TableHead>
+                    <TableHead scope="col">Joined</TableHead>
+                    <TableHead scope="col" className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -399,7 +399,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusColor(user.status)}>
+                          <Badge 
+                            variant={getStatusColor(user.status)}
+                            aria-label={`Status: ${user.status || 'active'}`}
+                          >
                             {user.status || 'active'}
                           </Badge>
                         </TableCell>
@@ -418,8 +421,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
-                            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {formatDate(user.created_at)}
+                            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                            <time dateTime={user.created_at}>
+                              {formatDate(user.created_at)}
+                            </time>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -436,32 +441,32 @@ export default async function UsersPage({ searchParams }: PageProps) {
               
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <nav aria-label="Pagination" className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground" aria-live="polite">
                     Showing {users.length} of {totalCount} users
                   </p>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2" role="group" aria-label="Pagination controls">
                     {currentPage > 1 && (
                       <Link href={`/users?page=${currentPage - 1}${searchParams?.search ? `&search=${searchParams.search}` : ''}${searchParams?.status ? `&status=${searchParams.status}` : ''}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" aria-label="Go to previous page">
                           Previous
                         </Button>
                       </Link>
                     )}
                     {currentPage < totalPages && (
                       <Link href={`/users?page=${currentPage + 1}${searchParams?.search ? `&search=${searchParams.search}` : ''}${searchParams?.status ? `&status=${searchParams.status}` : ''}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" aria-label="Go to next page">
                           Next
                         </Button>
                       </Link>
                     )}
                   </div>
-                </div>
+                </nav>
               )}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
+            <div className="text-center py-8" role="status">
+              <Users className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">No users found</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {searchParams?.search ? 'Try adjusting your search criteria' : 'Get started by creating a new user.'}

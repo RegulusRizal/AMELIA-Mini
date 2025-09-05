@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { assignRole, removeRole } from '../actions';
 import {
@@ -34,7 +34,7 @@ interface ManageRolesDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ManageRolesDialog({ 
+export const ManageRolesDialog = React.memo(function ManageRolesDialog({ 
   user, 
   currentRoles = [], 
   open, 
@@ -214,4 +214,6 @@ export function ManageRolesDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+ManageRolesDialog.displayName = 'ManageRolesDialog';

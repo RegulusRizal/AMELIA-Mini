@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { logger } from '@/lib/logging';
 
 /**
  * Check if the current user has the super_admin role
@@ -63,7 +64,11 @@ export async function getUserRoles(userId?: string) {
     .eq('user_id', userId);
   
   if (error || !userRoles) {
-    console.error('Error fetching user roles:', error);
+    logger.error('Error fetching user roles', error as Error, {
+      module: 'auth',
+      action: 'getUserRoles',
+      userId
+    });
     return [];
   }
   
@@ -103,7 +108,12 @@ export async function hasPermission(
     .eq('user_id', userId);
   
   if (error || !data) {
-    console.error('Error checking permission:', error);
+    logger.error('Error checking permission', error as Error, {
+      module: 'auth',
+      action: 'hasPermission',
+      userId,
+      metadata: { permission, resource }
+    });
     return false;
   }
   
@@ -145,7 +155,10 @@ export async function getAllRoles() {
     .order('priority', { ascending: false });
   
   if (error) {
-    console.error('Error fetching roles:', error);
+    logger.error('Error fetching roles', error as Error, {
+      module: 'auth',
+      action: 'getAllRoles'
+    });
     return [];
   }
   

@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+.next
+out
+dist
+build
+coverage
+
+# Environment files
+.env*
+
+# IDE
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+
+# Generated files
+*.min.js
+*.min.css
+
+# Supabase
+supabase/functions
+
+# Public assets
+public/
+
+# Cache
+.cache
+*.cache
+
+# Logs
+*.log

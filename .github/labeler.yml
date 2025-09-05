@@ -1,0 +1,130 @@
+# Configuration for GitHub labeler action
+# This file defines which labels to apply based on file changes
+
+# Frontend related changes
+frontend:
+  - app/**/*.tsx
+  - app/**/*.ts
+  - app/**/*.css
+  - components/**/*
+  - lib/client/**/*
+
+# Backend/API changes
+backend:
+  - app/api/**/*
+  - lib/supabase/**/*
+  - lib/server/**/*
+
+# Database changes
+database:
+  - supabase/migrations/**/*
+  - supabase/**/*
+  - '**/*.sql'
+
+# UI/UX changes
+ui/ux:
+  - app/**/*.tsx
+  - components/ui/**/*
+  - '**/*.css'
+  - tailwind.config.ts
+
+# Configuration changes
+configuration:
+  - '*.json'
+  - '*.config.*'
+  - '.env*'
+  - '.github/**/*'
+
+# Documentation changes
+documentation:
+  - '**/*.md'
+  - docs/**/*
+  - README.md
+  - ARCHITECTURE.md
+  - CLAUDE.md
+
+# Testing changes
+testing:
+  - '**/*.test.*'
+  - '**/*.spec.*'
+  - __tests__/**/*
+  - tests/**/*
+  - cypress/**/*
+
+# Security related changes
+security:
+  - app/auth/**/*
+  - middleware.ts
+  - lib/supabase/**/*
+  - supabase/migrations/*_rls*.sql
+
+# Module specific labels
+module:users:
+  - app/(modules)/users/**/*
+  - app/users/**/*
+
+module:hr:
+  - app/(modules)/hr/**/*
+  - app/hr/**/*
+
+module:finance:
+  - app/(modules)/finance/**/*
+  - app/finance/**/*
+
+module:inventory:
+  - app/(modules)/inventory/**/*
+  - app/inventory/**/*
+
+module:pos:
+  - app/(modules)/pos/**/*
+  - app/pos/**/*
+
+# Dependency updates
+dependencies:
+  - package.json
+  - package-lock.json
+  - yarn.lock
+  - pnpm-lock.yaml
+
+# CI/CD changes
+ci/cd:
+  - .github/workflows/**/*
+  - .github/actions/**/*
+  - vercel.json
+  - Dockerfile
+
+# Performance related
+performance:
+  - next.config.js
+  - app/**/*loading.tsx
+  - app/**/*suspense.tsx
+
+# Type definitions
+types:
+  - '**/*.d.ts'
+  - types/**/*
+  - lib/types/**/*
+
+# Build related
+build:
+  - next.config.js
+  - tsconfig.json
+  - webpack.config.js
+  - postcss.config.js
+  - tailwind.config.ts
+
+# Component library
+components:
+  - components/**/*
+  - app/components/**/*
+
+# Server actions
+server-actions:
+  - app/**/actions.ts
+  - app/**/actions/**/*
+
+# Utilities
+utilities:
+  - lib/utils/**/*
+  - lib/helpers/**/*
+  - utils/**/*

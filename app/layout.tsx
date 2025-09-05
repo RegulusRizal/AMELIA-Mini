@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
+import CookieConsent from '@/components/cookie-consent'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         {children}
         <Toaster position="top-right" />
+        <CookieConsent />
       </body>
     </html>
   )

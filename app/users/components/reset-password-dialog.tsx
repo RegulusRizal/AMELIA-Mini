@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { resetUserPassword, sendPasswordResetEmail } from '../actions';
 import {
@@ -30,7 +30,7 @@ interface ResetPasswordDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordDialogProps) {
+export const ResetPasswordDialog = React.memo(function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -316,4 +316,6 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+ResetPasswordDialog.displayName = 'ResetPasswordDialog';

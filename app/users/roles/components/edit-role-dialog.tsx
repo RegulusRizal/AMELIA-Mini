@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateRole } from '../actions';
 import {
@@ -42,7 +42,7 @@ interface EditRoleDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditRoleDialog({ role, modules, open, onOpenChange }: EditRoleDialogProps) {
+export const EditRoleDialog = React.memo(function EditRoleDialog({ role, modules, open, onOpenChange }: EditRoleDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -216,4 +216,6 @@ export function EditRoleDialog({ role, modules, open, onOpenChange }: EditRoleDi
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+EditRoleDialog.displayName = 'EditRoleDialog';

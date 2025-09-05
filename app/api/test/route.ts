@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { checkSuperAdmin } from '@/lib/auth/helpers'
+import { createApiLogger } from '@/lib/logging'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const logger = createApiLogger(request, { module: 'api', action: 'test' });
   // Add production check FIRST
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -41,8 +43,15 @@ export async function GET() {
       }
     }
     
-    return NextResponse.json(response, { status: 200 })
+    return NextResponse.json(response, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=59',
+      }
+    })
   } catch (error) {
+    logger.error('Failed to connect to Supabase', error as Error);
+    
     // Generic error message
     const errorMessage = process.env.NODE_ENV === 'development' 
       ? error instanceof Error ? error.message : 'Unknown error'

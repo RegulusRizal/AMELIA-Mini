@@ -2,8 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { checkSuperAdmin } from '@/lib/auth/helpers'
+import { createApiLogger } from '@/lib/logging'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const logger = createApiLogger(request, { module: 'api', action: 'debug' });
   // Add production check FIRST
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -47,8 +49,17 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json(debugInfo, { status: 200 })
+    return NextResponse.json(debugInfo, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
+    logger.error('Debug endpoint error', error as Error);
+    
     // Generic error message
     const errorMessage = process.env.NODE_ENV === 'development' 
       ? error instanceof Error ? error.message : 'Unknown error'

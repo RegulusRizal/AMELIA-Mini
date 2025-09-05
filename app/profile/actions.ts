@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logging';
 
 export async function updateProfile(userId: string, formData: FormData) {
   const supabase = await createClient();
@@ -32,7 +33,11 @@ export async function updateProfile(userId: string, formData: FormData) {
     .eq('id', userId);
   
   if (profileError) {
-    console.error('Error updating profile:', profileError);
+    logger.error('Error updating profile', profileError as Error, {
+      module: 'profile',
+      action: 'updateProfile',
+      userId
+    });
     return { error: profileError.message };
   }
   
@@ -43,7 +48,12 @@ export async function updateProfile(userId: string, formData: FormData) {
     });
     
     if (emailError) {
-      console.error('Error updating email:', emailError);
+      logger.error('Error updating email', emailError as Error, {
+        module: 'profile',
+        action: 'updateProfile',
+        userId,
+        metadata: { email }
+      });
       return { error: `Email update failed: ${emailError.message}` };
     }
   }
@@ -77,7 +87,11 @@ export async function changePassword(currentPassword: string, newPassword: strin
   });
   
   if (updateError) {
-    console.error('Error updating password:', updateError);
+    logger.error('Error updating password', updateError as Error, {
+      module: 'profile',
+      action: 'changePassword',
+      userId: user.id
+    });
     return { error: updateError.message };
   }
   

@@ -1,0 +1,244 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  label-pr:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR based on files changed
+        uses: actions/labeler@v4
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
+  pr-size:
+    name: Check PR Size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        uses: CodelyTV/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/xs'
+          xs_max_size: '10'
+          s_label: 'size/s'
+          s_max_size: '100'
+          m_label: 'size/m'
+          m_max_size: '500'
+          l_label: 'size/l'
+          l_max_size: '1000'
+          xl_label: 'size/xl'
+          fail_if_xl: false
+
+  check-pr-title:
+    name: Check PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title follows conventional commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+            security
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            doesn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+
+  check-merge-conflicts:
+    name: Check for Merge Conflicts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for merge conflicts
+        uses: olivernybroe/action-conflict-finder@v4.0
+
+  code-review:
+    name: Automated Code Review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Code Review Checks
+        run: |
+          echo "Running automated code review checks..."
+          
+          # Check for console.log statements
+          if grep -r "console.log" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next .; then
+            echo "::warning::Found console.log statements. Please remove them before merging."
+          fi
+          
+          # Check for TODO comments without issue references
+          if grep -r "TODO" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next . | grep -v "#[0-9]"; then
+            echo "::warning::Found TODO comments without issue references. Please link them to issues."
+          fi
+          
+          # Check for any TypeScript 'any' types
+          if grep -r ": any" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=.next .; then
+            echo "::warning::Found 'any' types. Please use proper TypeScript types."
+          fi
+
+      - name: Check for sensitive data
+        run: |
+          echo "Checking for potentially sensitive data..."
+          
+          # Check for hardcoded secrets
+          if grep -rE "(api_key|apikey|api-key|secret|password|pwd|token|auth)" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next . | grep -vE "(process\.env|import|export|interface|type|/\*|//|PASSWORD_REGEX)"; then
+            echo "::error::Found potentially hardcoded secrets. Please use environment variables."
+            exit 1
+          fi
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC
+
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build and analyze bundle
+        run: |
+          npm run build
+          npx next-bundle-analyzer || echo "Bundle analysis complete"
+
+      - name: Comment bundle size
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          pattern: ".next/**/*.js"
+          compression: "gzip"
+
+  test-coverage:
+    name: Test Coverage Report
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage --watchAll=false || echo "Tests completed"
+        continue-on-error: true
+
+      - name: Comment coverage report
+        if: always()
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-step: all
+          coverage-file: ./coverage/lcov.info
+          base-coverage-file: ./coverage/lcov.info
+
+  auto-assign:
+    name: Auto Assign Reviewers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto assign reviewers
+        uses: kentaro-m/auto-assign-action@v1.2.5
+        with:
+          configuration-path: .github/auto-assign.yml
+
+  pr-comment:
+    name: PR Welcome Comment
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+      - name: Comment on new PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.issue.number;
+            const prAuthor = context.payload.pull_request.user.login;
+            
+            const comment = `👋 Thanks for opening this PR, @${prAuthor}!
+            
+            Here's what will happen next:
+            1. Automated checks will run to validate your code
+            2. A reviewer will be automatically assigned
+            3. Once approved and all checks pass, your PR can be merged
+            
+            Please ensure:
+            - [ ] All tests are passing
+            - [ ] Code follows our style guidelines
+            - [ ] Documentation is updated if needed
+            - [ ] PR description is complete
+            
+            If you need any help, feel free to ask in the comments below!`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });

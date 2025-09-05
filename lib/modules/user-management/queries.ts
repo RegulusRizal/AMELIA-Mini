@@ -1,6 +1,7 @@
 // User Management Data Queries
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logging';
 import type { 
   UserProfile, 
   Role, 
@@ -82,7 +83,11 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
   const { data, error, count } = await query;
   
   if (error) {
-    console.error('Failed to fetch users:', error.message);
+    logger.error('Failed to fetch users', error as Error, {
+      module: 'user-management',
+      action: 'getUsers',
+      params
+    });
     // Return empty response instead of throwing to prevent page crash
     return {
       data: [],
@@ -197,7 +202,11 @@ export async function getRoles(params: RoleFilterParams = {}): Promise<Paginated
   const { data, error, count } = await query;
   
   if (error) {
-    console.error('Failed to fetch roles:', error.message);
+    logger.error('Failed to fetch roles', error as Error, {
+      module: 'user-management',
+      action: 'getRoles',
+      params
+    });
     // Return empty response instead of throwing to prevent page crash
     return {
       data: [],
@@ -328,7 +337,12 @@ export async function checkPermission(
   });
   
   if (error) {
-    console.error('Permission check failed:', error);
+    logger.error('Permission check failed', error as Error, {
+      module: 'user-management',
+      action: 'checkPermission',
+      permission: { module, resource, action },
+      userId
+    });
     return false;
   }
   
@@ -371,7 +385,12 @@ export async function canAccessModule(moduleName: string, userId?: string): Prom
   });
   
   if (error) {
-    console.error('Module access check failed:', error);
+    logger.error('Module access check failed', error as Error, {
+      module: 'user-management',
+      action: 'canAccessModule',
+      moduleName,
+      userId
+    });
     return false;
   }
   
@@ -391,7 +410,10 @@ export async function getUserTypes(): Promise<UserType[]> {
     .order('display_name');
   
   if (error) {
-    console.error('Failed to fetch user types:', error.message);
+    logger.error('Failed to fetch user types', error as Error, {
+      module: 'user-management',
+      action: 'getUserTypes'
+    });
     // Return empty array instead of throwing to prevent page crash
     return [];
   }

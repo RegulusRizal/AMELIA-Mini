@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteRole } from '../actions';
 import {
@@ -31,7 +31,7 @@ interface DeleteRoleDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function DeleteRoleDialog({ role, open, onOpenChange }: DeleteRoleDialogProps) {
+export const DeleteRoleDialog = React.memo(function DeleteRoleDialog({ role, open, onOpenChange }: DeleteRoleDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -160,4 +160,6 @@ export function DeleteRoleDialog({ role, open, onOpenChange }: DeleteRoleDialogP
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+DeleteRoleDialog.displayName = 'DeleteRoleDialog';

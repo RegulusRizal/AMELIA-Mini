@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteUser } from '../actions';
 import {
@@ -26,7 +26,7 @@ interface DeleteUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function DeleteUserDialog({ user, open, onOpenChange }: DeleteUserDialogProps) {
+export const DeleteUserDialog = React.memo(function DeleteUserDialog({ user, open, onOpenChange }: DeleteUserDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -122,4 +122,6 @@ export function DeleteUserDialog({ user, open, onOpenChange }: DeleteUserDialogP
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+DeleteUserDialog.displayName = 'DeleteUserDialog';

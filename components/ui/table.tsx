@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
+>(({ className, role = "table", ...props }, ref) => (
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
+      role={role}
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     />
@@ -68,14 +69,20 @@ TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & {
+    sortDirection?: "ascending" | "descending" | "none"
+  }
+>(({ className, scope = "col", sortDirection, ...props }, ref) => (
   <th
     ref={ref}
+    scope={scope}
+    aria-sort={sortDirection}
     className={cn(
       "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      sortDirection && sortDirection !== "none" && "cursor-pointer select-none",
       className
     )}
+    tabIndex={sortDirection ? 0 : undefined}
     {...props}
   />
 ))
@@ -83,17 +90,25 @@ TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <td
-    ref={ref}
-    className={cn(
-      "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-      className
-    )}
-    {...props}
-  />
-))
+  React.TdHTMLAttributes<HTMLTableCellElement> & {
+    asHeader?: boolean
+  }
+>(({ className, asHeader, ...props }, ref) => {
+  const Component = asHeader ? "th" : "td"
+  
+  return (
+    <Component
+      ref={ref}
+      scope={asHeader ? "row" : undefined}
+      className={cn(
+        "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        asHeader && "font-medium",
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TableCell.displayName = "TableCell"
 
 const TableCaption = React.forwardRef<

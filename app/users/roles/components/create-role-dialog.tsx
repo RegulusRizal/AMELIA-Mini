@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRole } from '../actions';
 import {
@@ -38,7 +38,7 @@ interface CreateRoleDialogProps {
   children: React.ReactNode;
 }
 
-export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
+export const CreateRoleDialog = React.memo(function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -234,4 +234,6 @@ export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+CreateRoleDialog.displayName = 'CreateRoleDialog';

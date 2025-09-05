@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireSuperAdmin } from '@/lib/auth/helpers';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logging';
 
 // Role CRUD operations
 export async function createRole(formData: FormData) {
@@ -48,7 +49,11 @@ export async function createRole(formData: FormData) {
     .single();
   
   if (error) {
-    console.error('Error creating role:', error);
+    logger.error('Error creating role', error as Error, {
+      module: 'users',
+      action: 'createRole',
+      metadata: { name, moduleId: moduleIdForDb }
+    });
     return { error: error.message };
   }
   
@@ -104,7 +109,11 @@ export async function updateRole(roleId: string, formData: FormData) {
     .eq('id', roleId);
   
   if (error) {
-    console.error('Error updating role:', error);
+    logger.error('Error updating role', error as Error, {
+      module: 'users',
+      action: 'updateRole',
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -172,7 +181,11 @@ export async function deleteRole(roleId: string) {
     .eq('id', roleId);
   
   if (error) {
-    console.error('Error deleting role:', error);
+    logger.error('Error deleting role', error as Error, {
+      module: 'users',
+      action: 'deleteRole',
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -216,7 +229,11 @@ export async function getRolePermissions(roleId: string) {
     .eq('role_id', roleId);
   
   if (error) {
-    console.error('Error fetching role permissions:', error);
+    logger.error('Error fetching role permissions', error as Error, {
+      module: 'users',
+      action: 'getRolePermissions',
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -267,7 +284,11 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
       .in('permission_id', toRemove);
     
     if (deleteError) {
-      console.error('Error removing permissions:', deleteError);
+      logger.error('Error removing permissions', deleteError as Error, {
+        module: 'users',
+        action: 'updateRolePermissions',
+        metadata: { roleId, toRemove }
+      });
       return { error: deleteError.message };
     }
   }
@@ -285,7 +306,11 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
       .insert(newPermissions);
     
     if (insertError) {
-      console.error('Error adding permissions:', insertError);
+      logger.error('Error adding permissions', insertError as Error, {
+        module: 'users',
+        action: 'updateRolePermissions',
+        metadata: { roleId, toAdd }
+      });
       return { error: insertError.message };
     }
   }
@@ -334,7 +359,10 @@ export async function getAvailablePermissions() {
     .order('action');
   
   if (error) {
-    console.error('Error fetching permissions:', error);
+    logger.error('Error fetching permissions', error as Error, {
+      module: 'users',
+      action: 'getAvailablePermissions'
+    });
     return { error: error.message };
   }
   
@@ -374,7 +402,11 @@ export async function getRoleUsers(roleId: string) {
     .eq('role_id', roleId);
   
   if (error) {
-    console.error('Error fetching role users:', error);
+    logger.error('Error fetching role users', error as Error, {
+      module: 'users',
+      action: 'getRoleUsers',
+      metadata: { roleId }
+    });
     return { error: error.message };
   }
   
@@ -431,7 +463,11 @@ export async function duplicateRole(roleId: string, newName: string) {
     .single();
   
   if (createError) {
-    console.error('Error duplicating role:', createError);
+    logger.error('Error duplicating role', createError as Error, {
+      module: 'users',
+      action: 'duplicateRole',
+      metadata: { roleId, newName }
+    });
     return { error: createError.message };
   }
   
@@ -453,7 +489,11 @@ export async function duplicateRole(roleId: string, newName: string) {
       .insert(newPermissions);
     
     if (permError) {
-      console.error('Error copying permissions:', permError);
+      logger.error('Error copying permissions', permError as Error, {
+        module: 'users',
+        action: 'duplicateRole',
+        metadata: { newRoleId: newRole.id, originalRoleId: roleId }
+      });
       // Continue anyway, role is created
     }
   }

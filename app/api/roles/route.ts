@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { checkSuperAdmin } from '@/lib/auth/helpers';
+import { createApiLogger } from '@/lib/logging';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const logger = createApiLogger(request, { module: 'api', action: 'roles' });
   try {
     // Check if user is super_admin
     const isSuperAdmin = await checkSuperAdmin();
@@ -20,14 +22,21 @@ export async function GET() {
       .order('priority', { ascending: false });
     
     if (error) {
-      console.error('Error fetching roles:', error);
+      logger.error('Error fetching roles', error as Error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     
-    return NextResponse.json({ roles: roles || [] });
+    return NextResponse.json(
+      { roles: roles || [] },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        }
+      }
+    );
     
   } catch (error) {
-    console.error('Error in roles API:', error);
+    logger.error('Error in roles API', error as Error);
     return NextResponse.json({ 
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'

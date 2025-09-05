@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/royshemuelyabut/AMELIA-Mini/blob/main/README.md
+    about: Check our documentation for answers to common questions
+  - name: Architecture Guide
+    url: https://github.com/royshemuelyabut/AMELIA-Mini/blob/main/ARCHITECTURE.md
+    about: Learn about the system architecture and design patterns
+  - name: Security Issue
+    url: mailto:security@amelia-mini.com
+    about: Please report security vulnerabilities privately via email

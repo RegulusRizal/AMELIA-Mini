@@ -1,0 +1,48 @@
+# Configuration for auto-assign GitHub Action
+# This automatically assigns reviewers and assignees to pull requests
+
+# Add reviewers to pull requests
+addReviewers: true
+
+# Add assignees to pull requests
+addAssignees: author
+
+# Number of reviewers to add
+numberOfReviewers: 1
+
+# List of reviewers to be added to pull requests
+reviewers:
+  - royshemuelyabut
+  # Add more GitHub usernames here as your team grows
+
+# List of assignees to be added to pull requests
+assignees:
+  - royshemuelyabut
+  # Add more GitHub usernames here as your team grows
+
+# Groups of reviewers
+# Uncomment and configure as your team grows
+# reviewerGroups:
+#   frontend:
+#     - reviewer1
+#     - reviewer2
+#   backend:
+#     - reviewer3
+#     - reviewer4
+
+# Skip certain users from auto-assignment
+skipKeywords:
+  - wip
+  - draft
+
+# Use review groups
+# useReviewGroups: false
+
+# Use assignee groups
+# useAssigneeGroups: false
+
+# Keywords to skip adding reviewers
+# skipKeywords:
+#   - wip
+#   - "[WIP]"
+#   - draft

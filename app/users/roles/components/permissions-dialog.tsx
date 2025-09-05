@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getRolePermissions, getAvailablePermissions, updateRolePermissions } from '../actions';
 import {
@@ -53,7 +53,7 @@ interface PermissionsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function PermissionsDialog({ role, open, onOpenChange }: PermissionsDialogProps) {
+export const PermissionsDialog = React.memo(function PermissionsDialog({ role, open, onOpenChange }: PermissionsDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -318,4 +318,6 @@ export function PermissionsDialog({ role, open, onOpenChange }: PermissionsDialo
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+PermissionsDialog.displayName = 'PermissionsDialog';
