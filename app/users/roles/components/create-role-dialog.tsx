@@ -48,7 +48,7 @@ export function CreateRoleDialog({ modules, children }: CreateRoleDialogProps) {
     name: '',
     display_name: '',
     description: '',
-    module_id: '',
+    module_id: 'global',
     priority: '50'
   });
   

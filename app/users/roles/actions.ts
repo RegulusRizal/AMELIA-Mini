@@ -25,7 +25,7 @@ export async function createRole(formData: FormData) {
     .select('id')
     .eq('name', name)
     .eq('module_id', moduleId || null)
-    .single();
+    .maybeSingle();
   
   if (existing) {
     return { error: 'Role with this name already exists in this scope' };
