@@ -52,35 +52,11 @@ USING (
   )
 );
 
--- Ensure your user has super_admin role
-DO $$
-DECLARE
-  v_user_id UUID;
-  v_role_id UUID;
-BEGIN
-  -- Get your user ID
-  SELECT id INTO v_user_id 
-  FROM auth.users 
-  WHERE email = 'royshemuelyabut@gmail.com'
-  LIMIT 1;
-  
-  -- Get super_admin role ID
-  SELECT id INTO v_role_id 
-  FROM roles 
-  WHERE name = 'super_admin'
-  LIMIT 1;
-  
-  -- Ensure user_roles assignment exists
-  IF v_user_id IS NOT NULL AND v_role_id IS NOT NULL THEN
-    INSERT INTO user_roles (user_id, role_id, assigned_by)
-    VALUES (v_user_id, v_role_id, v_user_id)
-    ON CONFLICT (user_id, role_id) DO NOTHING;
-    
-    RAISE NOTICE 'Ensured super_admin role for royshemuelyabut@gmail.com';
-  END IF;
-END $$;
+-- Use the safer assign_first_user_admin function instead of hard-coded email
+-- This function assigns super_admin role to the first user in the system
+SELECT assign_first_user_admin();
 
--- Also ensure profile exists for your user
+-- Ensure profiles exist for all auth users (not just specific emails)
 INSERT INTO profiles (id, email, display_name, status, created_at, updated_at)
 SELECT 
   id, 
@@ -90,6 +66,5 @@ SELECT
   NOW(),
   NOW()
 FROM auth.users
-WHERE email = 'royshemuelyabut@gmail.com'
 ON CONFLICT (id) DO UPDATE SET
   updated_at = NOW();
