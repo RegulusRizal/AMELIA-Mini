@@ -4,7 +4,12 @@ import { cookies } from 'next/headers'
 import { checkSuperAdmin } from '@/lib/auth/helpers'
 
 export async function GET() {
-  // Check if user is super_admin
+  // Add production check FIRST
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+  
+  // Then check super_admin for non-production
   const isSuperAdmin = await checkSuperAdmin()
   if (!isSuperAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
@@ -25,35 +30,15 @@ export async function GET() {
       cookie.name.includes('supabase')
     )
 
+    // Minimal debug info - no PII or sensitive data
     const debugInfo = {
-      status: 'debug',
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      environment: {
-        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      },
-      session: {
-        exists: !!session,
-        error: sessionError?.message || null,
-        expiresAt: session?.expires_at || null,
-        userId: session?.user?.id || null,
-        userEmail: session?.user?.email || null,
-      },
-      user: {
-        exists: !!user,
-        error: userError?.message || null,
-        id: user?.id || null,
-        email: user?.email || null,
-        createdAt: user?.created_at || null,
-        lastSignInAt: user?.last_sign_in_at || null,
-      },
-      cookies: {
-        total: allCookies.length,
-        authCookies: authCookies.map(c => ({
-          name: c.name,
-          hasValue: !!c.value,
-        }))
+      checks: {
+        hasSession: !!session,
+        hasUser: !!user,
+        hasAuthCookies: authCookies.length > 0,
+        environment: process.env.NODE_ENV || 'unknown'
       },
       troubleshooting: {
         sessionButNoUser: !!session && !user,
@@ -64,11 +49,16 @@ export async function GET() {
 
     return NextResponse.json(debugInfo, { status: 200 })
   } catch (error) {
+    // Generic error message
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error instanceof Error ? error.message : 'Unknown error'
+      : 'An unexpected error occurred';
+    
     return NextResponse.json(
       { 
         status: 'error',
         message: 'Debug endpoint error',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
       },
       { status: 500 }
     )

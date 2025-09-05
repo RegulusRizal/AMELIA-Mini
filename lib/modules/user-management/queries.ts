@@ -34,10 +34,17 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
     role_id
   } = params;
   
-  // Simplified query to avoid join errors
+  // Build query with proper joins when needed
+  let selectClause = '*';
+  
+  // If filtering by role, we need to join user_roles table
+  if (role_id) {
+    selectClause = '*, user_roles!inner(role_id)';
+  }
+  
   let query = supabase
     .from('profiles')
-    .select('*', { count: 'exact' });
+    .select(selectClause, { count: 'exact' });
   
   // Apply filters
   if (search) {
@@ -87,7 +94,7 @@ export async function getUsers(params: UserFilterParams = {}): Promise<Paginated
   }
   
   return {
-    data: data as UserProfile[] || [],
+    data: (data as unknown as UserProfile[]) || [],
     total: count || 0,
     page,
     limit,

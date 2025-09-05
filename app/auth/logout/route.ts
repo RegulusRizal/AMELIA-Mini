@@ -6,7 +6,12 @@ export async function POST(request: Request) {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // Generic error message
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message 
+      : 'An unexpected error occurred';
+    
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 
   return NextResponse.redirect(new URL('/auth/login', request.url))

@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import { checkSuperAdmin } from '@/lib/auth/helpers';
 
 export async function GET() {
+  // Add production check FIRST
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   // Check if user is super_admin
   const isSuperAdmin = await checkSuperAdmin();
   if (!isSuperAdmin) {
@@ -14,30 +19,42 @@ export async function GET() {
     const supabase = await createClient();
     const adminClient = createAdminClient();
     
-    // Get current user
+    // Get current user first (needed for auth context)
     const { data: { user } } = await supabase.auth.getUser();
     
-    // Use admin client to list auth users
-    const { data: { users: authUsers }, error: authError } = await adminClient.auth.admin.listUsers({ 
-      page: 1,
-      perPage: 10 
-    });
-    
-    // Check profiles table
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(10);
-    
-    // Check roles table
-    const { data: roles, error: rolesError } = await supabase
-      .from('roles')
-      .select('*');
-    
-    // Check user_roles table
-    const { data: userRoles, error: userRolesError } = await supabase
-      .from('user_roles')
-      .select('*');
+    // Parallelize all database queries for better performance
+    const [
+      authUsersResult,
+      profilesResult,
+      rolesResult,
+      userRolesResult
+    ] = await Promise.all([
+      // Use admin client to list auth users
+      adminClient.auth.admin.listUsers({ 
+        page: 1,
+        perPage: 10 
+      }),
+      // Check profiles table
+      supabase
+        .from('profiles')
+        .select('*')
+        .limit(10),
+      // Check roles table
+      supabase
+        .from('roles')
+        .select('*'),
+      // Check user_roles table
+      supabase
+        .from('user_roles')
+        .select('*')
+        .limit(100)
+    ]);
+
+    // Destructure results
+    const { data: { users: authUsers }, error: authError } = authUsersResult;
+    const { data: profiles, error: profilesError } = profilesResult;
+    const { data: roles, error: rolesError } = rolesResult;
+    const { data: userRoles, error: userRolesError } = userRolesResult;
     
     // Run a simple query to check if tables exist
     const tableCheck = {
@@ -46,27 +63,27 @@ export async function GET() {
       user_roles: userRolesError?.message || 'OK'
     };
     
+    // Minimal debug info - no PII
     return NextResponse.json({
-      currentUser: user,
-      authUsers: authUsers?.map(u => ({ id: u.id, email: u.email })) || [],
-      authUsersError: authError?.message,
-      tableStatus: tableCheck,
-      profiles: profiles || [],
-      profilesError: profilesError?.message,
-      roles: roles || [],
-      rolesError: rolesError?.message,
-      userRoles: userRoles || [],
-      userRolesError: userRolesError?.message,
-      authUsersCount: authUsers?.length || 0,
-      profilesCount: profiles?.length || 0,
-      rolesCount: roles?.length || 0,
-      userRolesCount: userRoles?.length || 0
+      status: 'ok',
+      counts: {
+        authUsers: authUsers?.length || 0,
+        profiles: profiles?.length || 0,
+        roles: roles?.length || 0,
+        userRoles: userRoles?.length || 0
+      },
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
+    // Generic error message
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error instanceof Error ? error.message : 'Unknown error'
+      : 'An unexpected error occurred';
+    
     return NextResponse.json({ 
       error: 'Debug endpoint error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: errorMessage
     });
   }
 }
