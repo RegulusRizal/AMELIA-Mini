@@ -166,9 +166,9 @@ const nextConfig = {
   // Optimize bundling
   productionBrowserSourceMaps: false,
   
-  // Configure runtime caching
+  // Configure runtime caching - disable optimizeCss for deployment
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true, // Temporarily disabled due to critters dependency
   },
 }
 
