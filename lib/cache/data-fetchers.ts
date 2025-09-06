@@ -9,86 +9,72 @@ import { CACHE_TAGS, CACHE_DURATIONS } from './index';
 import { logger } from '@/lib/logging';
 
 /**
- * Cached function to get all users
+ * Function to get all users (temporarily without caching to fix global cache issues)
  */
-export const getCachedUsers = unstable_cache(
-  async () => {
-    const supabase = await createClient();
-    
-    const { data: users, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        user_roles!inner(
-          role_id,
-          roles(
-            id,
-            name,
-            description,
-            priority
-          )
+export const getCachedUsers = async () => {
+  const supabase = await createClient();
+  
+  const { data: users, error } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      user_roles(
+        role_id,
+        roles(
+          id,
+          name,
+          description,
+          priority
         )
-      `)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      logger.error('Error fetching cached users', error as Error, {
-        module: 'cache',
-        action: 'getCachedUsers'
-      });
-      return [];
-    }
-    
-    return users || [];
-  },
-  ['get-users'], // Cache key
-  {
-    tags: [CACHE_TAGS.USERS, CACHE_TAGS.PROFILES],
-    revalidate: CACHE_DURATIONS.FIVE_MINUTES,
+      )
+    `)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    logger.error('Error fetching cached users', error as Error, {
+      module: 'cache',
+      action: 'getCachedUsers'
+    });
+    return [];
   }
-);
+  
+  return users || [];
+};
 
 /**
- * Cached function to get a single user by ID
+ * Function to get a single user by ID (temporarily without caching to fix global cache issues)
  */
-export const getCachedUser = unstable_cache(
-  async (userId: string) => {
-    const supabase = await createClient();
-    
-    const { data: user, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        user_roles!inner(
-          role_id,
-          roles(
-            id,
-            name,
-            description,
-            priority
-          )
+export const getCachedUser = async (userId: string) => {
+  const supabase = await createClient();
+  
+  const { data: user, error } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      user_roles(
+        role_id,
+        roles(
+          id,
+          name,
+          description,
+          priority
         )
-      `)
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      logger.error('Error fetching cached user', error as Error, {
-        module: 'cache',
-        action: 'getCachedUser',
-        userId
-      });
-      return null;
-    }
-    
-    return user;
-  },
-  ['get-user'], // Cache key prefix
-  {
-    tags: [CACHE_TAGS.USERS],
-    revalidate: CACHE_DURATIONS.FIVE_MINUTES,
+      )
+    `)
+    .eq('id', userId)
+    .single();
+  
+  if (error) {
+    logger.error('Error fetching cached user', error as Error, {
+      module: 'cache',
+      action: 'getCachedUser',
+      userId
+    });
+    return null;
   }
-);
+  
+  return user;
+};
 
 /**
  * Cached function to get all roles
@@ -268,35 +254,31 @@ export const getCachedDashboardStats = unstable_cache(
 );
 
 /**
- * Cached function for profile autocomplete/search
+ * Function for profile autocomplete/search (temporarily without caching to fix global cache issues)
  */
-export const getCachedProfileSearch = unstable_cache(
-  async (query: string) => {
-    const supabase = await createClient();
-    
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, avatar_url')
-      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
-      .limit(10);
-    
-    if (error) {
-      logger.error('Error searching profiles', error as Error, {
-        module: 'cache',
-        action: 'getCachedProfileSearch',
-        metadata: { query }
-      });
-      return [];
-    }
-    
-    return profiles || [];
-  },
-  ['profile-search'], // Cache key prefix
-  {
-    tags: [CACHE_TAGS.PROFILES],
-    revalidate: CACHE_DURATIONS.MINUTE, // Short cache for search results
+export const getCachedProfileSearch = async (query: string) => {
+  const supabase = await createClient();
+  
+  // Sanitize query to prevent SQL injection
+  const sanitizedQuery = query.replace(/[%_]/g, '\\$&');
+  
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, display_name, email, avatar_url')
+    .or(`first_name.ilike.%${sanitizedQuery}%,last_name.ilike.%${sanitizedQuery}%,display_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`)
+    .limit(10);
+  
+  if (error) {
+    logger.error('Error searching profiles', error as Error, {
+      module: 'cache',
+      action: 'getCachedProfileSearch',
+      metadata: { query }
+    });
+    return [];
   }
-);
+  
+  return profiles || [];
+};
 
 // Export all cached functions
 export default {
